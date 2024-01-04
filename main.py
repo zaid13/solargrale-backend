@@ -98,8 +98,8 @@ def read_item(item_id: int, q: Union[str, None] = None):
 #     results = {"item_id": item_id, "item": item, "user": user}
 #     return results
 
-@app.put("/azimuth/{id}")
-async def update_item(id: int, point1: Point, point2: Point,point3: Point,point4: Point ):
+@app.put("/azimuth/")
+async def update_item( point1: Point, point2: Point,point3: Point,point4: Point ):
 
     # point1 = Point(53.61591272, 9.98706581, 0, 0, "upper_edge")
     # point2 = Point(53.61589630, 9.98716121, 0, 0, "upper_edge")
