@@ -1,8 +1,11 @@
 from typing import Union
 
 from fastapi import FastAPI
+import requests
 
 from pydantic import BaseModel
+import os
+
 
 # -*- coding: utf-8 -*-
 """
@@ -108,3 +111,19 @@ async def update_item( point1: Point, point2: Point,point3: Point,point4: Point 
     pv_azimuth = calculate_pv_azimuth(points)
 
     return {"aziumth": pv_azimuth, }
+
+
+
+@app.put("/elevation/")
+async def update_item( lat: float, long: float):
+    api_key = os.environ.get("API_KEY")
+
+    reqUrl = "https://maps.googleapis.com/maps/api/elevation/json?locations="+  str(lat) +"%2C"+  str(long) + "&key="+api_key
+    print(reqUrl)
+    response = requests.get(reqUrl)
+
+
+    # Calculate the PV Azimuth with the provided points
+
+
+    return response.json(),
