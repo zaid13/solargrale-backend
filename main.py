@@ -2,9 +2,18 @@ from typing import Union
 
 from fastapi import FastAPI
 import requests
+from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
 import os
+
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "http://localhost:3000",
+]
 
 
 # -*- coding: utf-8 -*-
@@ -84,7 +93,13 @@ def calculate_pv_azimuth(points):
 
 app = FastAPI()
 
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/")
 def read_root():
     return {"Solar": "Glare V 1.0"}
