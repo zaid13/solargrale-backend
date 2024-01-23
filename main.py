@@ -114,9 +114,9 @@ async def update_item( point1: Point, point2: Point,point3: Point,point4: Point 
 
 
 
-@app.put("/elevation/")
+@app.get("/elevation/")
 async def update_item( lat: float, long: float):
-    api_key = os.environ.get("API_KEY")
+    api_key = os.environ.get("API_KEY", )
 
     reqUrl = "https://maps.googleapis.com/maps/api/elevation/json?locations="+  str(lat) +"%2C"+  str(long) + "&key="+api_key
     print(reqUrl)
