@@ -1,11 +1,15 @@
 from typing import Union
-
-from fastapi import FastAPI
 import requests
 from fastapi.middleware.cors import CORSMiddleware
-
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import os
+from typing import Any
+from fastapi import Body, FastAPI
+from starlette.responses import FileResponse
+import json
+
+from addlogoTopdf import addLogogo
+from test_api_v2 import sendRequestBackend
 
 origins = [
     "http://localhost.tiangolo.com",
@@ -14,7 +18,6 @@ origins = [
     "http://localhost:8080",
     "http://localhost:3000",
 ]
-
 
 # -*- coding: utf-8 -*-
 """
@@ -25,21 +28,68 @@ Created on Fri Dec 22 00:41:56 2023
 
 import math
 
+
+#  "list_of_pv_area_information": [
+#         {"azimuth": 59, "tilt": 38, "name": "Dachanlage 1"}
+#     ],
+
+class PV_area_information(BaseModel):
+    azimuth: float
+    tilt: float
+    name: str
+    # tag:str ||"tag": "string"
+    # tag: str =  Field(examples=["upper_edge","lower_edge"])
+
+
+class PointC():
+    lat: float
+    lon: float
+    elevation: float
+    offset: float
+
+
 # Class to store points with latitude, longitude, elevation, offset, and a tag
 class Point(BaseModel):
-    lat:float
-    lon:float
-    elevation:float
-    offset:float
-    tag:str
+    lat: float
+    lon: float
+    elevation: float
+    offset: float
 
-    # def __init__(self, lat, lon, elevation, offset, tag):
-    #     super().__init__(lat=lat, damage=damage)
-    #     self.lat = lat
-    #     self.lon = lon
-    #     self.elevation = elevation # ground elevation
-    #     self.offset = offset # height above ground elevateion
-    #     self.tag = tag # the tag is for upper_edge oder lower_edge
+
+#
+# class ReqDataStructure(BaseModel):
+#     identifier:int
+#     # pv_areas:list[list:BaseModel]]
+#     list_of_pv_area_information:list[PV_area_information()]
+#     list_of_ops:list[Point(BaseModel)]
+#     utc:int
+#
+#     # def toJson(self):
+#     #     return {
+#     #         "identifier": self.identifier,  # Hier den Identifier einfügen
+#     #         "pv_areas": self.pv_areas.dict()
+#     #
+#     #         [
+#     #             [
+#     #                 {"latitude": 48.931985, "longitude": 9.520857, "ground_elevation": 298.75, "height_above_ground": 8.00},
+#     #                 {"latitude": 48.932009 	, "longitude": 9.520952, "ground_elevation": 298.75, "height_above_ground": 4.10},
+#     #                 {"latitude": 48.932090, "longitude": 9.520873, "ground_elevation": 298.75, "height_above_ground": 4.10},
+#     #                 {"latitude": 48.932063, "longitude": 9.520780, "ground_elevation": 298.75, "height_above_ground": 8.00}
+#     #             ]
+#     #         ],
+#     #         "list_of_pv_area_information": [
+#     #             {"azimuth": 59, "tilt": 38, "name": "Dachanlage 1"}
+#     #         ],
+#     #         "list_of_ops": [
+#     #             {"latitude": 48.932100, "longitude": 9.521008, "ground_elevation": 301.00, "height_above_ground": 1.50}
+#     #         ],
+#     #         "utc": 1
+#     #     }
+#
+#     # tag:str ||"tag": "string"
+#     # tag: str =  Field(examples=["upper_edge","lower_edge"])
+#
+
 
 # Function to calculate azimuth angle between two coordinates
 def calculate_azimuth(lat1, lon1, lat2, lon2):
@@ -59,6 +109,7 @@ def calculate_azimuth(lat1, lon1, lat2, lon2):
 
     return azimuth
 
+
 # Function to calculate the PV azimuth
 def calculate_pv_azimuth(points):
     # Find points with the tag "upper_edge"
@@ -66,7 +117,7 @@ def calculate_pv_azimuth(points):
 
     # Ensure exactly two "upper_edge" points exist
     if len(upper_edges) != 2:
-        raise ValueError("There must be exactly two points with the tag 'upper_edge'.")
+        raise ValueError("There must be exactly two points with the tag 'upper_edge'. and two with 'lower_edge' ")
 
     # Calculate the azimuth angle between the two "upper_edge" points
     edge_orientation = calculate_azimuth(upper_edges[0].lat, upper_edges[0].lon,
@@ -89,6 +140,7 @@ def calculate_pv_azimuth(points):
 
     return (edge_orientation - 90) % 360
 
+
 # Example coordinates forming a rectangle
 
 app = FastAPI()
@@ -100,11 +152,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 @app.get("/")
 def read_root():
     return {"Solar": "Glare V 1.0"}
-
-
 
 
 # @app.put("/items/{item_id}")
@@ -113,8 +165,7 @@ def read_root():
 #     return results
 
 @app.put("/azimuth/")
-async def update_item( point1: Point, point2: Point,point3: Point,point4: Point ):
-
+async def update_item(point1: Point, point2: Point, point3: Point, point4: Point):
     # point1 = Point(53.61591272, 9.98706581, 0, 0, "upper_edge")
     # point2 = Point(53.61589630, 9.98716121, 0, 0, "upper_edge")
     # point3 = Point(53.61583476, 9.98712882, 0, 0, "lower_edge")
@@ -123,22 +174,43 @@ async def update_item( point1: Point, point2: Point,point3: Point,point4: Point 
     points = [point1, point2, point3, point4]
 
     # Calculate the PV Azimuth with the provided points
-    pv_azimuth = calculate_pv_azimuth(points)
+    try:
+        pv_azimuth = calculate_pv_azimuth(points)
+    except  Exception as e:
+        print(e)
+        return {"error": str(e), }
 
     return {"aziumth": pv_azimuth, }
 
 
-
 @app.get("/elevation/")
-async def update_item( lat: float, long: float):
+async def update_item(lat: float, long: float):
     api_key = os.environ.get("API_KEY", )
 
-    reqUrl = "https://maps.googleapis.com/maps/api/elevation/json?locations="+  str(lat) +"%2C"+  str(long) + "&key="+api_key
+    reqUrl = "https://maps.googleapis.com/maps/api/elevation/json?locations=" + str(lat) + "%2C" + str(long) + "&key=" + api_key
     print(reqUrl)
     response = requests.get(reqUrl)
 
-
     # Calculate the PV Azimuth with the provided points
 
-
     return response.json(),
+
+
+@app.post('/getPDF')
+async def getPDF(
+        payload: Any = Body(None)
+):
+
+    # return FileResponse('assets/report.pdf', media_type='application/octet-stream', filename='report.pdf')
+
+    sendRequestBackend(payload)
+    file_name = str(payload['identifier'])
+    file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
+
+    addLogogo(file_path)
+
+    print(payload)
+
+    return FileResponse(file_path, media_type='application/octet-stream', filename=file_name + '.pdf')
+
+# return payload
