@@ -109,13 +109,15 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc):
 
         plt.tight_layout()
 
-        plt. savefig('barchart.png')
+        plt. savefig('assets/'+str(utc)+'barchart.png')
 
         plt.show()
 
 
 
 def sendRequestBackend(data):
+
+
 
     # Parameter
     api_url = "http://d2x.eu/api/process_glare"

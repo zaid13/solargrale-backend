@@ -197,17 +197,48 @@ async def update_item(lat: float, long: float):
 
 
 @app.post('/getPDF')
-async def getPDF(
-        payload: Any = Body(None)
-):
+async def getPDF(payload: Any = Body(None)):
+    """
+    Create an item with all the information:
+
+    - **name**: each item must have a name
+    - **description**: a long description
+    - **price**: required
+    - **tax**: if the item doesn't have tax, you can omit this
+
+    Example:
+
+    ```
+    {
+        "identifier":123,
+         "pv_areas": [
+             [
+                 {"latitude": 48.931985, "longitude": 9.520857, "ground_elevation": 298.75, "height_above_ground": 8.00},
+                 {"latitude": 48.932009 	, "longitude": 9.520952, "ground_elevation": 298.75, "height_above_ground": 4.10},
+                 {"latitude": 48.932090, "longitude": 9.520873, "ground_elevation": 298.75, "height_above_ground": 4.10},
+                 {"latitude": 48.932063, "longitude": 9.520780, "ground_elevation": 298.75, "height_above_ground": 8.00}
+             ]
+         ],
+         "list_of_pv_area_information": [
+             {"azimuth": 59, "tilt": 38, "name": "Dachanlage 1"}
+         ],
+         "list_of_ops": [
+             {"latitude": 48.932100, "longitude": 9.521008, "ground_elevation": 301.00, "height_above_ground": 1.50}
+         ],
+         "utc": 1
+     }
+    ```
+
+    """
 
     # return FileResponse('assets/report.pdf', media_type='application/octet-stream', filename='report.pdf')
 
     sendRequestBackend(payload)
     file_name = str(payload['identifier'])
+    utc = str(payload['utc'])
     file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
 
-    addLogogo(file_path)
+    addLogogo(file_path,utc)
 
     print(payload)
 
