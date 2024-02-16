@@ -5,4 +5,4 @@ requests==2.31.0
 pandas==2.1.4
 matplotlib==3.8.0
 fpdf==1.7.2
-starlette==0.36.3
+starlette==0.32.0
