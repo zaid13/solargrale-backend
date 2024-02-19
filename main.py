@@ -54,6 +54,8 @@ class Point(BaseModel):
     lon: float
     elevation: float
     offset: float
+    tag: str
+
 
 
 #
