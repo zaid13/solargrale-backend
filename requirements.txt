@@ -6,3 +6,7 @@ pandas==2.1.4
 matplotlib==3.8.0
 fpdf==1.7.2
 starlette==0.32.0
+scipy==1.12.0
+pvlib==0.10.3
+h5py==3.10.0
+scikit-learn==1.4.1

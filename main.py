@@ -10,6 +10,8 @@ import json
 
 from addlogoTopdf import addLogogo
 from test_api_v2 import sendRequestBackend
+from test_api_v2 import runScriptLocally
+
 
 origins = [
     "http://localhost.tiangolo.com",
@@ -17,6 +19,7 @@ origins = [
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:3000",
+    "http://127.0.0.1:8086"
 ]
 
 # -*- coding: utf-8 -*-
@@ -187,7 +190,7 @@ async def update_item(point1: Point, point2: Point, point3: Point, point4: Point
 
 @app.get("/elevation/")
 async def update_item(lat: float, long: float):
-    api_key = os.environ.get("API_KEY", )
+    api_key = "AIzaSyCTXnohcGL0e0EIUr2v4jpEOOoDMKewEaM"  #os.environ.get("API_KEY", )
 
     reqUrl = "https://maps.googleapis.com/maps/api/elevation/json?locations=" + str(lat) + "%2C" + str(long) + "&key=" + api_key
     print(reqUrl)
@@ -233,9 +236,12 @@ async def getPDF(payload: Any = Body(None)):
 
     """
 
-    # return FileResponse('assets/report.pdf', media_type='application/octet-stream', filename='report.pdf')
 
-    sendRequestBackend(payload)
+    # sendRequestBackend(payload)
+    runScriptLocally(payload)
+
+    print(1)
+
     file_name = str(payload['identifier'])
     utc = str(payload['utc'])
     file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
