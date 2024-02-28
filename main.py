@@ -9,6 +9,7 @@ from starlette.responses import FileResponse
 import json
 
 from addlogoTopdf import addLogogo
+from firebase_crud import uploadFileReturnUrl
 from test_api_v2 import sendRequestBackend
 from test_api_v2 import runScriptLocally
 
@@ -215,7 +216,8 @@ async def getPDF(payload: Any = Body(None)):
 
     ```
     {
-        "identifier":123,
+
+        "identifier":"docId",
          "pv_areas": [
              [
                  {"latitude": 48.931985, "longitude": 9.520857, "ground_elevation": 298.75, "height_above_ground": 8.00},
@@ -242,7 +244,7 @@ async def getPDF(payload: Any = Body(None)):
 
     print(1)
 
-    file_name = str(payload['identifier'])
+    file_name = (payload['identifier'])
     utc = str(payload['utc'])
     file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
 
@@ -250,6 +252,10 @@ async def getPDF(payload: Any = Body(None)):
 
     print(payload)
 
-    return FileResponse(file_path, media_type='application/octet-stream', filename=file_name + '.pdf')
+    string = uploadFileReturnUrl(file_name + '.pdf')
+    os.remove(file_path)
+    return string
+
+    # return FileResponse(file_path, media_type='application/octet-stream', filename=file_name + '.pdf')
 
 # return payload
