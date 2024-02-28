@@ -171,6 +171,7 @@ def runScriptLocally(data):
     calculation_id = data['identifier']
     utc_offset = data['utc']
 
+
     if len(dataframes) == 0:
         print("No glare.")
     else:
