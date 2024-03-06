@@ -1,14 +1,14 @@
 import firebase_admin
 from firebase_admin import credentials, firestore, storage
 
-cred = credentials.Certificate('assets/solar-glare-firebase-adminsdk-qrutq-5d40af353c.json')
-firebase_admin.initialize_app(cred, {
-    'storageBucket': 'solar-glare.appspot.com'
-})
 
 def uploadFileReturnUrl(fileName):
+    cred = credentials.Certificate('assets/solar-glare-firebase-adminsdk-qrutq-5d40af353c.json')
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': 'solar-glare.appspot.com'
+    })
 
-
+    # bucket = storage.bucket()
     bucket = storage.bucket()
 
     blob = bucket.blob('result/'+fileName)
