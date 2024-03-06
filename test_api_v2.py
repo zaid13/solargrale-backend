@@ -10,16 +10,15 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from processing import process_data
 
 
 def check_timestamps_uniqueness(df):
     """Überprüft, ob alle Zeitstempel in einem DataFrame einzigartig sind.
     Es wird angenommen, dass die Zeitstempel in einer Spalte namens 'timestamp' gespeichert sind.
-
+    
     Args:
         df (pd.DataFrame): Der DataFrame, der die Zeitstempel enthält.
-
+        
     Returns:
         bool: True, wenn alle Zeitstempel einzigartig sind, sonst False.
     """
@@ -116,7 +115,6 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc):
 
 
 
-
 def sendRequestBackend(data):
 
 
@@ -126,51 +124,43 @@ def sendRequestBackend(data):
     # unique_identifier = 123456789
     api_key = "toto901toto"
 
+    # Ersetzen Sie dies durch Ihre tatsächlichen Eingabedaten
+    # data = {
+    #     "identifier": unique_identifier,  # Hier den Identifier einfügen
+    #     "pv_areas": [
+    #         [
+    #             {"latitude": 48.931985, "longitude": 9.520857, "ground_elevation": 298.75, "height_above_ground": 8.00},
+    #             {"latitude": 48.932009 	, "longitude": 9.520952, "ground_elevation": 298.75, "height_above_ground": 4.10},
+    #             {"latitude": 48.932090, "longitude": 9.520873, "ground_elevation": 298.75, "height_above_ground": 4.10},
+    #             {"latitude": 48.932063, "longitude": 9.520780, "ground_elevation": 298.75, "height_above_ground": 8.00}
+    #         ]
+    #     ],
+    #     "list_of_pv_area_information": [
+    #         {"azimuth": 59, "tilt": 38, "name": "Dachanlage 1"}
+    #     ],
+    #     "list_of_ops": [
+    #         {"latitude": 48.932100, "longitude": 9.521008, "ground_elevation": 301.00, "height_above_ground": 1.50}
+    #     ],
+    #     "utc": 1
+    # }
+
+    # Optionale Header, falls benötigt (z.B. für Authentifizierung)
     headers = {
         "Content-Type": "application/json",
         "API-Key": api_key
     }
-    print(data)
 
     # Senden der POST-Anfrage
     response = requests.post(api_url, data=json.dumps(data), headers=headers)
-    print('response.status_co de')
-    print(response.status_code)
     results_as_py_dict = response.json()
 
     # Anzeigen der Gesamtstruktur des Antwort-Dictionarys, aber diesmal tiefer in 'glare_periods' eintauchen
     print("Status Code:", response.status_code)
     dataframes = [pd.read_json(json_str) for json_str in results_as_py_dict['glare_periods']]
-    print(dataframes)
-
     calculation_id = results_as_py_dict['identifier']
     utc_offset = results_as_py_dict['utc']
 
     print("Request ID: " + str(calculation_id))
-
-    if len(dataframes) == 0:
-        print("No glare.")
-    else:
-        print("Glare derected.")
-        print("Are all timestamps unique? " + str(check_timestamps_uniqueness(dataframes[0])))
-        plot_sun_position_reflections_for_multiple_dfs(dataframes, utc_offset)
-
-
-def runScriptLocally(data):
-
-    pv_areas = data['pv_areas']
-    list_of_pv_area_information = data['list_of_pv_area_information']
-    list_of_ops = data['list_of_ops']
-    utc = data['utc']
-    results_as_py_dict =  process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc)
-
-    # results_as_py_dict={'glare_periods':results_as_py_dict}  # [{'timestamp':results_as_py_dict}]}
-    #
-
-    dataframes =results_as_py_dict  #  [pd.read_json(json_str) for json_str in results_as_py_dict['glare_periods']]
-    calculation_id = data['identifier']
-    utc_offset = data['utc']
-
 
     if len(dataframes) == 0:
         print("No glare.")
