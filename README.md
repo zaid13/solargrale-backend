@@ -89,7 +89,7 @@ _Below is an example of how you can instruct your audience on installing and set
 
 4. ubuntu server
    ```js
-   nohup uvicorn main:app --host 0.0.0.0 port 80
+   nohup uvicorn main:app --host 0.0.0.0 port 80 &
     ```
    
 kill process
