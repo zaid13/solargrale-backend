@@ -110,50 +110,13 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc):
 
         plt.tight_layout()
 
+        print("saving data to fig")
         plt. savefig('assets/'+str(utc)+'barchart.png')
 
         # plt.show()
 
 
 
-
-def sendRequestBackend(data):
-
-
-
-    # Parameter
-    api_url = "http://d2x.eu/api/process_glare"
-    # unique_identifier = 123456789
-    api_key = "toto901toto"
-
-    headers = {
-        "Content-Type": "application/json",
-        "API-Key": api_key
-    }
-    print(data)
-
-    # Senden der POST-Anfrage
-    response = requests.post(api_url, data=json.dumps(data), headers=headers)
-    print('response.status_co de')
-    print(response.status_code)
-    results_as_py_dict = response.json()
-
-    # Anzeigen der Gesamtstruktur des Antwort-Dictionarys, aber diesmal tiefer in 'glare_periods' eintauchen
-    print("Status Code:", response.status_code)
-    dataframes = [pd.read_json(json_str) for json_str in results_as_py_dict['glare_periods']]
-    print(dataframes)
-
-    calculation_id = results_as_py_dict['identifier']
-    utc_offset = results_as_py_dict['utc']
-
-    print("Request ID: " + str(calculation_id))
-
-    if len(dataframes) == 0:
-        print("No glare.")
-    else:
-        print("Glare derected.")
-        print("Are all timestamps unique? " + str(check_timestamps_uniqueness(dataframes[0])))
-        plot_sun_position_reflections_for_multiple_dfs(dataframes, utc_offset)
 
 
 def runScriptLocally(data):
@@ -174,7 +137,10 @@ def runScriptLocally(data):
 
     if len(dataframes) == 0:
         print("No glare.")
+        return False
+
     else:
         print("Glare derected.")
         print("Are all timestamps unique? " + str(check_timestamps_uniqueness(dataframes[0])))
         plot_sun_position_reflections_for_multiple_dfs(dataframes, utc_offset)
+        return True

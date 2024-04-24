@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.dates as mdates
 from sklearn.decomposition import PCA
+from scipy.spatial import ConvexHull
+from scipy.spatial import Delaunay
 
 def geographic_to_cartesian(points, origin):
     cartesian_coordinates = []
@@ -40,36 +42,28 @@ def fit_plane_to_points(points):
 
 def generate_calculation_points(points, width):
     points = np.array(points)
-    
-    # PCA zur Bestimmung der Hauptachsen
-    pca = PCA(n_components=3)
-    pca.fit(points)
-    
-    # Bestimme das lokale Koordinatensystem (die Achsen)
-    axes = pca.components_
-    
-    # Transformiere Punkte in das lokale Koordinatensystem
-    points_transformed = pca.transform(points)
-    
-    # Bestimme die Grenzen im transformierten System
-    min_bounds = np.min(points_transformed, axis=0)
-    max_bounds = np.max(points_transformed, axis=0)
-    
-    # Berechne die Berechnungspunkte im lokalen Koordinatensystem
-    x_coords = np.arange(min_bounds[0], max_bounds[0], width)
-    y_coords = np.arange(min_bounds[1], max_bounds[1], width)
-    z_coords = np.array([0])  # Z wird als konstant angenommen, um im Rahmen des Rechtecks zu bleiben
-    
-    calculation_points_local = []
-    for x in x_coords:
-        for y in y_coords:
-            for z in z_coords:
-                calculation_points_local.append([x, y, z])
-    
-    # Transformiere die lokalen Berechnungspunkte zurück in das globale Koordinatensystem
-    calculation_points_global = pca.inverse_transform(calculation_points_local)
-    
+    pca = PCA(n_components=2)  # Annahme: die Punkte liegen annähernd in einer Ebene
+    points_transformed = pca.fit_transform(points)
+    hull = ConvexHull(points_transformed)
+
+    # Generiere ein Gitter über die Bounding Box der konvexen Hülle
+    x_min, x_max = points_transformed[:, 0].min(), points_transformed[:, 0].max()
+    y_min, y_max = points_transformed[:, 1].min(), points_transformed[:, 1].max()
+
+    x_coords = np.arange(x_min, x_max + width, width)
+    y_coords = np.arange(y_min, y_max + width, width)
+    grid = np.array(np.meshgrid(x_coords, y_coords)).T.reshape(-1, 2)
+
+    # Filtere die Punkte, die innerhalb der konvexen Hülle liegen
+    grid = np.array([point for point in grid if is_point_inside_hull(point, hull)])
+
+    # Transformiere zurück in das globale Koordinatensystem
+    calculation_points_global = pca.inverse_transform(grid)
     return calculation_points_global.tolist()
+
+def is_point_inside_hull(point, hull):
+    deln = Delaunay(hull.points[hull.vertices])
+    return deln.find_simplex(point) >= 0
 
 def plot_results_for_op(cps, op_transformed, pv_points_transformed, df, op_index):
     cps_array = np.array(cps)
@@ -102,7 +96,7 @@ def plot_results_for_op(cps, op_transformed, pv_points_transformed, df, op_index
     
     plt.legend()
     plt.tight_layout()
-    # plt.show()
+    plt.show()
 
 def calculate_sun_positions(origin_point, year, timezone_offset, delta_t='1min', sun_threshold=0):
     # Erstellen eines Location-Objekts mit Höhe über dem Meeresspiegel
@@ -252,7 +246,7 @@ def plot_sun_position_reflections_date_time(df, utc, i):
 
     plt.xticks(rotation=45)
     plt.tight_layout()
-    # plt.show()
+    plt.show()
 
 def plot_geometry(pv_points_transformed_list, cps_list, ops_transformed):
     fig = plt.figure(figsize=(10, 7))
@@ -288,7 +282,7 @@ def plot_geometry(pv_points_transformed_list, cps_list, ops_transformed):
     ax.set_title('Visualisierung von PV-Polygonen, CPs und OPs')
     
     plt.tight_layout()
-    # plt.show()
+    plt.show()
 
 def save_df_to_excel_with_timestamp(df):
     # Erstelle eine Kopie des DataFrames, um die Originaldaten unverändert zu lassen
@@ -372,7 +366,7 @@ def process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc):
     # Schritt 3: Berechne Sonnenpositionen für das Jahr 2024
     sun_positions = calculate_sun_positions(origin_point, year, utc, resolution, sun_elevation_threshold)
     
-    #plot_geometry(pv_areas_tansformed, cps_set, ops_transformed)
+    # plot_geometry(pv_areas_tansformed, cps_set, ops_transformed)
 
     # Schritt 4: Berechne 3D-Richtungsvektoren
     set_of_vecs_op_to_cps = []
@@ -399,38 +393,33 @@ def process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc):
 
     # Bereinigung und Vereinfachung der DataFrames
     simplified_dfs = clean_and_simplify_dfs(result_dfs)
-    # print(simplified_dfs)
+    print(simplified_dfs)
 
     # Erstellung der Tageszusammenfassung
     return simplified_dfs
 
-def demo():
+if __name__ == '__main__':
+
     # EXAMPLE DATA
     ######################
     # Beispielwerte für PV-Punkte und Beobachtungspunkte #
-    pv_point_01 = {'latitude': 53.74621563, 'longitude': 9.66355692, 'ground_elevation': 0, 'height_above_ground': 15}
-    pv_point_02 = {'latitude': 53.74610293, 'longitude': 9.66353955, 'ground_elevation': 0, 'height_above_ground': 15}
-    pv_point_03 = {'latitude': 53.74609897, 'longitude': 9.66358732, 'ground_elevation': 0, 'height_above_ground': 10}
-    pv_point_04 = {'latitude': 53.74620921, 'longitude': 9.66360361, 'ground_elevation': 0, 'height_above_ground': 10}
-    op_01 = {'latitude': 53.74614449, 'longitude': 9.66371593, 'ground_elevation': 0, 'height_above_ground': 10}
+    pv_point_01 = {"latitude": 53.590556, "longitude": 10.078993, "ground_elevation": 300, "height_above_ground": 15}
+    pv_point_02 = {"latitude": 53.590567, "longitude": 10.079046, "ground_elevation": 300, "height_above_ground": 15}
+    pv_point_03 = {"latitude": 53.590532, "longitude": 10.079144, "ground_elevation": 300, "height_above_ground": 10}
+    pv_point_04 = {"latitude": 53.590488, "longitude": 10.078950, "ground_elevation": 300, "height_above_ground": 10}
+    op_01 = {"latitude": 53.590711, "longitude": 10.078924, "ground_elevation": 300, "height_above_ground": 10}
     #######################
 
     # FROM FRONTEND
     #######################
     # DataSet input from frontend
     pv_areas = [[pv_point_01, pv_point_02, pv_point_03, pv_point_04]]
-    list_of_pv_area_information = [{'azimuth': 90, 'tilt': 20, 'name': 'Vertical PV area 1'}]
+    list_of_pv_area_information = [{"azimuth": 180, "tilt": 20, "name": "Vertical PV area 1"}]
     list_of_ops = [op_01]
     utc = 1
     #######################
-    print(pv_areas)
-    print(list_of_pv_area_information)
-    print(list_of_ops)
     process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc)
 
 
 
-
-if __name__ == '__main__':
-    demo()
 

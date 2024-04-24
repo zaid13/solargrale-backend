@@ -10,7 +10,7 @@ import json
 
 from addlogoTopdf import addLogogo
 from firebase_crud import uploadFileReturnUrl
-from test_api_v2 import sendRequestBackend
+# from test_api_v2 import sendRequestBackend
 from test_api_v2 import runScriptLocally
 
 
@@ -242,7 +242,10 @@ async def getPDF(payload: Any = Body(None)):
 
 
     # sendRequestBackend(payload)
-    runScriptLocally(payload)
+    glareFound = runScriptLocally(payload)
+
+    if glareFound==False:
+        return {"glareFound":False,"reportUrl":""}
 
     print(1)
 
@@ -256,7 +259,9 @@ async def getPDF(payload: Any = Body(None)):
 
     string = uploadFileReturnUrl(file_name + '.pdf')
     os.remove(file_path)
-    return string
+    # return string
+    return {"glareFound":True,"reportUrl":string}
+
 
     # return FileResponse(file_path, media_type='application/octet-stream', filename=file_name + '.pdf')
 
