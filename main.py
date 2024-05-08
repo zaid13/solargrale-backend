@@ -148,6 +148,16 @@ def calculate_pv_azimuth(points):
 
     return (edge_orientation - 90) % 360
 
+def remove_images(file_name,list_of_ops):
+    ''''''
+    file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
+    os.remove(file_path)
+    for ctr in range(0,len(list_of_ops)):
+        file_path = os.getcwd() + '/assets/'+file_name+f'barchart{ctr+1}.png'
+        os.remove(file_path)
+
+
+
 
 # Example coordinates forming a rectangle
 
@@ -253,12 +263,13 @@ async def getPDF(payload: Any = Body(None)):
     utc = str(payload['utc'])
     file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
 
-    addLogogo(file_path,utc)
+    addLogogo(file_path,file_name,len(payload['list_of_ops']))
 
     print(payload)
 
     string = uploadFileReturnUrl(file_name + '.pdf')
-    os.remove(file_path)
+    # os.remove(file_path)
+    remove_images(file_name,payload['list_of_ops'])
     # return string
     return {"glareFound":True,"reportUrl":string}
 

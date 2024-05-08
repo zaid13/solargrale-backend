@@ -10,12 +10,27 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.dates as mdates
 from sklearn.decomposition import PCA
 
+def geographic_to_cartesian_for_point(point, origin):
+    cartesian_coordinates = []
+    origin_lat = origin['latitude']
+    origin_lon = origin['longitude']
+    origin_elevation = origin['ground_elevation'] + origin['height_above_ground']
+
+    print('point')
+    print(point)
+    delta_lat = (point['latitude'] - origin_lat) * 111319.9
+    delta_lon = (point['longitude'] - origin_lon) * 111319.9 * math.cos(math.radians(point['latitude']))
+    delta_elevation = (point['ground_elevation'] + point['height_above_ground']) - origin_elevation
+    cartesian_coordinates.append((delta_lon, delta_lat, delta_elevation))
+    return cartesian_coordinates
 def geographic_to_cartesian(points, origin):
     cartesian_coordinates = []
     origin_lat = origin['latitude']
     origin_lon = origin['longitude']
     origin_elevation = origin['ground_elevation'] + origin['height_above_ground']
     for point in points:
+        print('points')
+        print(points)
         delta_lat = (point['latitude'] - origin_lat) * 111319.9
         delta_lon = (point['longitude'] - origin_lon) * 111319.9 * math.cos(math.radians(point['latitude']))
         delta_elevation = (point['ground_elevation'] + point['height_above_ground']) - origin_elevation
@@ -342,10 +357,10 @@ def create_daily_summary_dfs(simplified_dfs):
     return daily_summary_dfs
 
 
-def process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc):
+def process_data(pv_areas, list_of_pv_area_information, origin_point, utc):
     # SIMULATION PARAMETER
     #######################
-    grid_width = 0.25  # Beispiel für Gitterbreite
+    grid_width = 1# 0.25  # Beispiel für Gitterbreite
     year = 2024
     resolution = '1min'
     sun_elevation_threshold = 3
@@ -353,7 +368,7 @@ def process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc):
     sun_reflection_angle_threshold = 10.49
     #######################
 
-    origin_point = list_of_ops[0]
+    # origin_point = list_of_ops[0]
 
     # Schritt 1: Transformiere geografische Koordinaten in kartesische Koordinaten
     pv_areas_tansformed = []
@@ -361,7 +376,7 @@ def process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc):
         pv_area_transformed = geographic_to_cartesian(pv_area, origin_point)
         pv_areas_tansformed.append(pv_area_transformed)
     
-    ops_transformed = geographic_to_cartesian(list_of_ops, origin_point)
+    ops_transformed = geographic_to_cartesian_for_point(origin_point, origin_point)
 
     # Schritt 2: Generiere Berechnungspunkte
     cps_set = []
@@ -404,33 +419,33 @@ def process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc):
     # Erstellung der Tageszusammenfassung
     return simplified_dfs
 
-def demo():
-    # EXAMPLE DATA
-    ######################
-    # Beispielwerte für PV-Punkte und Beobachtungspunkte #
-    pv_point_01 = {'latitude': 53.74621563, 'longitude': 9.66355692, 'ground_elevation': 0, 'height_above_ground': 15}
-    pv_point_02 = {'latitude': 53.74610293, 'longitude': 9.66353955, 'ground_elevation': 0, 'height_above_ground': 15}
-    pv_point_03 = {'latitude': 53.74609897, 'longitude': 9.66358732, 'ground_elevation': 0, 'height_above_ground': 10}
-    pv_point_04 = {'latitude': 53.74620921, 'longitude': 9.66360361, 'ground_elevation': 0, 'height_above_ground': 10}
-    op_01 = {'latitude': 53.74614449, 'longitude': 9.66371593, 'ground_elevation': 0, 'height_above_ground': 10}
-    #######################
-
-    # FROM FRONTEND
-    #######################
-    # DataSet input from frontend
-    pv_areas = [[pv_point_01, pv_point_02, pv_point_03, pv_point_04]]
-    list_of_pv_area_information = [{'azimuth': 90, 'tilt': 20, 'name': 'Vertical PV area 1'}]
-    list_of_ops = [op_01]
-    utc = 1
-    #######################
-    print(pv_areas)
-    print(list_of_pv_area_information)
-    print(list_of_ops)
-    process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc)
-
-
-
-
-if __name__ == '__main__':
-    demo()
-
+# # def demo():
+# #     # EXAMPLE DATA
+# #     ######################
+# #     # Beispielwerte für PV-Punkte und Beobachtungspunkte #
+# #     pv_point_01 = {'latitude': 53.74621563, 'longitude': 9.66355692, 'ground_elevation': 0, 'height_above_ground': 15}
+# #     pv_point_02 = {'latitude': 53.74610293, 'longitude': 9.66353955, 'ground_elevation': 0, 'height_above_ground': 15}
+# #     pv_point_03 = {'latitude': 53.74609897, 'longitude': 9.66358732, 'ground_elevation': 0, 'height_above_ground': 10}
+# #     pv_point_04 = {'latitude': 53.74620921, 'longitude': 9.66360361, 'ground_elevation': 0, 'height_above_ground': 10}
+# #     op_01 = {'latitude': 53.74614449, 'longitude': 9.66371593, 'ground_elevation': 0, 'height_above_ground': 10}
+# #     #######################
+# #
+# #     # FROM FRONTEND
+# #     #######################
+# #     # DataSet input from frontend
+# #     pv_areas = [[pv_point_01, pv_point_02, pv_point_03, pv_point_04]]
+# #     list_of_pv_area_information = [{'azimuth': 90, 'tilt': 20, 'name': 'Vertical PV area 1'}]
+# #     list_of_ops = [op_01]
+# #     utc = 1
+# #     #######################
+# #     print(pv_areas)
+# #     print(list_of_pv_area_information)
+# #     print(list_of_ops)
+# #     process_data(pv_areas, list_of_pv_area_information, list_of_ops, utc)
+#
+#
+#
+#
+# if __name__ == '__main__':
+#     demo()
+#
