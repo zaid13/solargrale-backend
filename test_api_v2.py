@@ -17,7 +17,7 @@ import PIL
 from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
-
+from model.model import Point, GlareRequestModel
 import io
 
 
@@ -184,12 +184,12 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_
 
 
 
-def runScriptLocally(data):
+def runScriptLocally(data:GlareRequestModel):
 
-    pv_areas = data['pv_areas']
-    list_of_pv_area_information = data['list_of_pv_area_information']
-    list_of_ops = data['list_of_ops']
-    utc = data['utc']
+    pv_areas = data.pv_areas
+    list_of_pv_area_information = data.list_of_pv_area_information
+    list_of_ops = data.list_of_ops
+    utc = data.meta_data.utc
 
     ctr=1;
     for ops in list_of_ops:
@@ -199,18 +199,18 @@ def runScriptLocally(data):
     #
 
         dataframes =results_as_py_dict  #  [pd.read_json(json_str) for json_str in results_as_py_dict['glare_periods']]
-        calculation_id = data['identifier']
-        utc_offset = data['utc']
+        calculation_id = data.identifier
+
 
 
         if len(dataframes) == 0:
-            plot_sun_position_reflections_for_multiple_dfs(dataframes, utc_offset,ctr,ops,file_name=calculation_id)
+            plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_name=calculation_id)
             print("No glare.")
             # return False
 
         else:
             print("Glare derected.")
             print("Are all timestamps unique? " + str(check_timestamps_uniqueness(dataframes[0])))
-            plot_sun_position_reflections_for_multiple_dfs(dataframes, utc_offset,ctr,ops,file_name=calculation_id)
+            plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_name=calculation_id)
             # return True
         ctr=ctr+1

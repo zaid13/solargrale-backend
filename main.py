@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import Body, FastAPI
 from starlette.responses import FileResponse
 import json
-
+from model.model import Point, GlareRequestModel
 from addlogoTopdf import addLogogo
 from firebase_crud import uploadFileReturnUrl
 # from test_api_v2 import sendRequestBackend
@@ -35,32 +35,6 @@ Created on Fri Dec 22 00:41:56 2023
 import math
 
 
-#  "list_of_pv_area_information": [
-#         {"azimuth": 59, "tilt": 38, "name": "Dachanlage 1"}
-#     ],
-
-class PV_area_information(BaseModel):
-    azimuth: float
-    tilt: float
-    name: str
-    # tag:str ||"tag": "string"
-    # tag: str =  Field(examples=["upper_edge","lower_edge"])
-
-
-class PointC():
-    lat: float
-    lon: float
-    elevation: float
-    offset: float
-
-
-# Class to store points with latitude, longitude, elevation, offset, and a tag
-class Point(BaseModel):
-    lat: float
-    lon: float
-    elevation: float
-    offset: float
-    tag: str
 
 
 
@@ -214,7 +188,7 @@ async def update_item(lat: float, long: float):
     return response.json(),
 
 
-@app.post('/getPDF')
+@app.post('/getPDFV1')
 async def getPDF(payload: Any = Body(None)):
     """
     Create an item with all the information:
@@ -251,13 +225,13 @@ async def getPDF(payload: Any = Body(None)):
     """
 
 
-    # sendRequestBackend(payload)
+
     glareFound = runScriptLocally(payload)
 
     if glareFound==False:
         return {"glareFound":False,"reportUrl":""}
 
-    print(1)
+
 
     file_name = (payload['identifier'])
     utc = str(payload['utc'])
@@ -276,4 +250,90 @@ async def getPDF(payload: Any = Body(None)):
 
     # return FileResponse(file_path, media_type='application/octet-stream', filename=file_name + '.pdf')
 
-# return payload
+
+
+
+@app.post('/getPDF')
+async def getPDF(payload: GlareRequestModel):
+    """
+    Create an item with all the information:
+
+    - **name**: each item must have a name
+    - **description**: a long description
+    - **price**: required
+    - **tax**: if the item doesn't have tax, you can omit this
+
+    Example:
+
+    ```
+    {
+      "identifier": "cub175",
+      "pv_areas": [
+        [
+          {"latitude": 48.088565, "longitude": 11.566283, "ground_elevation": 555.86, "height_above_ground": 40},
+          {"latitude": 48.088592, "longitude": 11.566361, "ground_elevation": 555.76, "height_above_ground": 40},
+          {"latitude": 48.088562, "longitude": 11.566409, "ground_elevation": 555.93, "height_above_ground": 30},
+          {"latitude": 48.088524, "longitude": 11.566298, "ground_elevation": 556.13, "height_above_ground": 30}
+        ]
+      ],
+      "list_of_pv_area_information": [
+        {"azimuth": 152.65, "tilt": 25, "name": "PV Area 1"}
+      ],
+      "list_of_ops": [
+        {"latitude": 48.088505, "longitude": 11.566374, "ground_elevation": 555.92, "height_above_ground": 30},
+        {"latitude": 48.088493, "longitude": 11.566435, "ground_elevation": 555.78, "height_above_ground": 23},
+        {"latitude": 48.088493, "longitude": 11.566476, "ground_elevation": 555.76, "height_above_ground": 26}
+      ],
+      "excluded_areas": [
+        [
+          {"latitude": 48.088500, "longitude": 11.566300},
+          {"latitude": 48.088520, "longitude": 11.566350},
+          {"latitude": 48.088540, "longitude": 11.566400},
+          {"latitude": 48.088560, "longitude": 11.566450},
+          {"latitude": 48.088500, "longitude": 11.566500}
+        ]
+      ],
+      "meta_data": {
+        "user_id": 123456789,
+        "project_id": 123456789,
+        "sim_id": 123456789,
+        "timestamp": 1625235600,
+        "utc": 1
+      },
+      "simulation_parameter": {
+        "grid_width": 0.7,
+        "resolution": "1min",
+        "sun_elevation_threshold": 4,
+        "beam_spread": 6.5,
+        "sun_angle": 0.5,
+        "sun_reflection_threshold": 10.5,
+        "zoom_level": 20
+      }
+    }
+    ```
+
+    """
+    glareFound = runScriptLocally(payload)
+
+    if glareFound==False:
+        return {"glareFound":False,"reportUrl":""}
+
+
+
+    file_name = (payload.identifier)
+    file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
+
+    addLogogo(file_path,file_name,len(payload.list_of_ops))
+
+    print(payload)
+
+    string = uploadFileReturnUrl(file_name + '.pdf')
+    # os.remove(file_path)
+    remove_images(file_name,payload.list_of_ops)
+    # return string
+    return {"glareFound":True,"reportUrl":string}
+
+
+    return payload
+
+
