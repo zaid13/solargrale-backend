@@ -8,11 +8,20 @@ from fastapi import Body, FastAPI
 from starlette.responses import FileResponse
 import json
 from model.model import Point, GlareRequestModel
+from model.userModel import User,Token,UserInDB
 from addlogoTopdf import addLogogo
 from firebase_crud import uploadFileReturnUrl
 # from test_api_v2 import sendRequestBackend
 from test_api_v2 import runScriptLocally
+from passlib.context import CryptContext
 
+from typing import Annotated
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from datetime import datetime, timedelta
+from auth.accessToken import  create_access_token
 
 origins = [
     "http://localhost.tiangolo.com",
@@ -134,6 +143,9 @@ def remove_images(file_name,list_of_ops):
 
 
 # Example coordinates forming a rectangle
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 app = FastAPI()
 
@@ -336,4 +348,40 @@ async def getPDF(payload: GlareRequestModel):
 
     return payload
 
+def authenticate_user(db, username: str, password: str):
+    ''''''
+    # user = get_user(db, username)
+    # if not user:
+    #     return False
+    # if not verify_password(password, user.hashed_password):
+    #     return False
+    #
+    # return user
 
+
+@app.post("/token", response_model=Token)
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                            detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.username}, expires_delta=access_token_expires)
+    return {"access_token": access_token, "token_type": "bearer"}
+
+
+SECRET_KEY = "83daa0256a2289b0fb23693bf1f6034d44396675749244721a2b20e896e11662"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+async def get_current_user(token: str = Depends(oauth2_scheme)):
+    return user
+async def get_current_active_user(current_user: UserInDB = Depends(get_current_user)):
+    if current_user.disabled:
+        raise HTTPException(status_code=400, detail="Inactive user")
+
+    return current_user
+
+@app.get("/users/me/", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_active_user)):
+    return current_user

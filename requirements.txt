@@ -12,3 +12,8 @@ h5py==3.10.0
 scikit-learn==1.4.0
 firebase-admin==6.4.0
 Pillow==9.4.0
+passlib==1.7.4
+jose==1.0.0
+Crypto==1.4.1
+python-jose==3.3.0
+python-multipart==0.0.9

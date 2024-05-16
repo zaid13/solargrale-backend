@@ -30,9 +30,9 @@ class Simulation_Parameter(BaseModel):
 
 
 class MetaData(BaseModel):
-    user_id: int
-    project_id: int
-    sim_id: int
+    user_id: str
+    project_id: str
+    sim_id: str
     timestamp: int
     utc: int
 
