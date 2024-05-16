@@ -75,17 +75,15 @@ _Below is an example of how you can instruct your audience on installing and set
    ```sh
    git clone https://github.com/zaid13/solargrale-backend.git
    ```
-2. Install uvicorn
-   ```sh
-   pip install uvicorn
-   ```
-3. Install fastapi
+
+2. Install requirements file libraries
    ```js
-   pip  install fastapi
+   pip install -r requirements.txt
    ```
-4. run
+3.  run
    ```js
    uvicorn main:app --reload
+   ```
 
 4. ubuntu server
    ```js
