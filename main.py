@@ -306,9 +306,9 @@ async def getPDF(payload: GlareRequestModel):
         ]
       ],
       "meta_data": {
-        "user_id": 123456789,
-        "project_id": 123456789,
-        "sim_id": 123456789,
+        "user_id": "123456789",
+        "project_id": "123456789",
+        "sim_id": "123456789",
         "timestamp": 1625235600,
         "utc": 1
       },
