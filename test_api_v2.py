@@ -10,7 +10,8 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from processing import process_data
+# from processing import process_data
+from new_code.processing_v2 import process_data
 import base64
 from PIL import Image
 import PIL
@@ -18,6 +19,10 @@ from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
 from model.model import Point, GlareRequestModel
+import datetime
+import pathlib
+from pathlib import Path
+
 import io
 
 
@@ -39,16 +44,19 @@ def check_timestamps_uniqueness(df):
     are_unique = df[timestamp_column].is_unique
 
     return are_unique
-def text2png(text, fullpath, color = "#000", bgcolor = "#FFF", fontfullpath = None, fontsize = 15, leftpadding = 3, rightpadding = 3, width = 200):
+
+
+def text2png(text, fullpath, color="#000", bgcolor="#FFF", fontfullpath=None, fontsize=15, leftpadding=3,
+             rightpadding=3, width=200):
     REPLACEMENT_CHARACTER = u'\uFFFD'
     NEWLINE_REPLACEMENT_STRING = ' ' + REPLACEMENT_CHARACTER + ' '
 
-    #prepare linkback
+    # prepare linkback
     # linkback = "created via http://ourdomain.com"
     # fontlinkback = ImageFont.truetype('font.ttf', 8)
     # linkbackx = fontlinkback.getsize(linkback)[0]
     # linkback_height = fontlinkback.getsize(linkback)[1]
-    #end of linkback
+    # end of linkback
 
     font = ImageFont.load_default() if fontfullpath == None else ImageFont.truetype(fontfullpath, fontsize)
     text = text.replace('\n', NEWLINE_REPLACEMENT_STRING)
@@ -58,21 +66,21 @@ def text2png(text, fullpath, color = "#000", bgcolor = "#FFF", fontfullpath = No
 
     for word in text.split():
         print(word)
-        if word == REPLACEMENT_CHARACTER: #give a blank line
-            lines.append( line[1:] ) #slice the white space in the begining of the line
+        if word == REPLACEMENT_CHARACTER:  # give a blank line
+            lines.append(line[1:])  # slice the white space in the begining of the line
             line = u""
-            lines.append( u"" ) #the blank line
-        elif font.getsize( line + ' ' + word )[0] <= (width - rightpadding - leftpadding):
+            lines.append(u"")  # the blank line
+        elif font.getsize(line + ' ' + word)[0] <= (width - rightpadding - leftpadding):
             line += ' ' + word
-        else: #start a new line
-            lines.append( line[1:] ) #slice the white space in the begining of the line
+        else:  # start a new line
+            lines.append(line[1:])  # slice the white space in the begining of the line
             line = u""
 
-            #TODO: handle too long words at this point
-            line += ' ' + word #for now, assume no word alone can exceed the line width
+            # TODO: handle too long words at this point
+            line += ' ' + word  # for now, assume no word alone can exceed the line width
 
     if len(line) != 0:
-        lines.append( line[1:] ) #add the last line
+        lines.append(line[1:])  # add the last line
 
     line_height = font.getsize(text)[1]
     img_height = line_height * (len(lines) + 1)
@@ -82,7 +90,7 @@ def text2png(text, fullpath, color = "#000", bgcolor = "#FFF", fontfullpath = No
 
     y = 0
     for line in lines:
-        draw.text( (leftpadding, y), line, color, font=font)
+        draw.text((leftpadding, y), line, color, font=font)
         y += line_height
 
     # add linkback at the bottom
@@ -91,11 +99,13 @@ def text2png(text, fullpath, color = "#000", bgcolor = "#FFF", fontfullpath = No
     img.save(fullpath)
 
 
-def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_name):
+def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc, ctr, ops, file_name):
     # Iteriere durch jeden DataFrame in der Liste
-    if (len(dataframes)==0):
+    if (len(dataframes) == 0):
         ''''''
-        text2png(f'No glare detected at Observation point {ctr} \nHeight: {ops["height_above_ground"]} , Latitude:{ops["latitude"]} Longitude:{ops["longitude"]}', 'assets/'+file_name+f'barchart{ctr}.png', fontfullpath = "assets/Lato-Regular.ttf")
+        text2png(
+            f'No glare detected at Observation point {ctr} \nHeight: {ops["height_above_ground"]} , Latitude:{ops["latitude"]} Longitude:{ops["longitude"]}',
+            'assets/' + file_name + f'barchart{ctr}.png', fontfullpath="assets/Lato-Regular.ttf")
         # image = base64.b64decode(str('stringdata'))
         # # fileName = 'assets/'+str(utc)+f'barchart{i+1}.png'
 
@@ -113,7 +123,8 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_
         fig, ax = plt.subplots(2, figsize=(12, 16))
 
         # Scatter Plot
-        ax[0].scatter(df['timestamp'], df['timestamp'].dt.hour + df['timestamp'].dt.minute / 60.0, c=colors, alpha=1, s=10, marker='s')
+        ax[0].scatter(df['timestamp'], df['timestamp'].dt.hour + df['timestamp'].dt.minute / 60.0, c=colors, alpha=1,
+                      s=10, marker='s')
 
         # Legende
         legend_labels = {'gold': 'Glare effect', 'gray': 'Reflection is superimposed by the sun'}
@@ -131,7 +142,8 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_
         # Setze Achsenbeschriftungen
         ax[0].set_xlabel('Date')
         ax[0].set_ylabel('Time (UTC+' + str(utc) + ')')
-        ax[0].set_title(f'Detected glare periods for Observation point {ctr} Height: {ops["height_above_ground"]} , Latitude:{ops["latitude"]} Longitude:{ops["longitude"]} ')
+        ax[0].set_title(
+            f'Detected glare periods for Observation point {ctr} Height: {ops["height_above_ground"]} , Latitude:{ops["latitude"]} Longitude:{ops["longitude"]} ')
 
         # Anpassung der Y-Achse Formatierung
         ax[0].set_ylim(0, 24)
@@ -155,8 +167,10 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_
 
         # Plot Balkendiagramm
         dates = pd.to_datetime(df_grouped.index)
-        ax[1].bar(dates, df_grouped['true_count'], color='gray', label='Reflection is superimposed by the sun', width=1, align='center')
-        ax[1].bar(dates, df_grouped['false_count'], bottom=df_grouped['true_count'], color='gold', label='Glare effect', width=1, align='center')
+        ax[1].bar(dates, df_grouped['true_count'], color='gray', label='Reflection is superimposed by the sun', width=1,
+                  align='center')
+        ax[1].bar(dates, df_grouped['false_count'], bottom=df_grouped['true_count'], color='gold', label='Glare effect',
+                  width=1, align='center')
 
         # Formatierung der X-Achse
         ax[1].xaxis.set_major_locator(mdates.MonthLocator())
@@ -165,7 +179,8 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_
         # Setze Achsenbeschriftungen für Balkendiagramm
         ax[1].set_xlabel('Date')
         ax[1].set_ylabel('Minutes per day')
-        ax[1].set_title(f'Daily glare occurrence for Observation point {ctr} Height: {ops["height_above_ground"]} , Latitude:{ops["latitude"]} Longitude:{ops["longitude"]} ')
+        ax[1].set_title(
+            f'Daily glare occurrence for Observation point {ctr} Height: {ops["height_above_ground"]} , Latitude:{ops["latitude"]} Longitude:{ops["longitude"]} ')
 
         # Setze Grenzen für x-Achse auf ein ganzes Jahr
         ax[1].set_xlim(min_date, max_date)
@@ -176,41 +191,32 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_
         plt.tight_layout()
 
         print("saving data to fig")
-        plt. savefig('assets/'+file_name+f'barchart{ctr}.png')
+        plt.savefig('assets/' + file_name + f'barchart{ctr}.png')
 
         # plt.show()
 
 
+async def runScriptLocally(data: GlareRequestModel):
+    current_datetime = datetime.datetime.now()
+    timestamp = int(current_datetime.timestamp())
 
-
-
-def runScriptLocally(data:GlareRequestModel):
-
+    google_api_key = "AIzaSyBSwoYxoN9_6oma8thxLWTdIeQkTxsN5Rs"
     pv_areas = data.pv_areas
     list_of_pv_area_information = data.list_of_pv_area_information
     list_of_ops = data.list_of_ops
-    utc = data.meta_data.utc
+    meta_data = {'user_id': data.meta_data.user_id, 'project_id': data.meta_data.project_id,
+                 'sim_id': data.meta_data.sim_id, 'timestamp': timestamp, 'utc': data.meta_data.utc}
+    simulation_parameter = {'grid_width': data.simulation_parameter.grid_width,
+                            'resolution': data.simulation_parameter.resolution,
+                            'sun_elevation_threshold': data.simulation_parameter.sun_elevation_threshold,
+                            'beam_spread': data.simulation_parameter.beam_spread,
+                            'sun_angle': data.simulation_parameter.sun_angle,
+                            'sun_reflection_threshold': data.simulation_parameter.sun_reflection_threshold,
+                            'zoom_level': data.simulation_parameter.zoom_level}
 
-    ctr=1;
-    for ops in list_of_ops:
-        results_as_py_dict =  process_data(pv_areas, list_of_pv_area_information, ops, utc)
+    pathlib.Path(f'{Path.cwd()}/assets/{str(timestamp)}').mkdir(parents=True, exist_ok=True)
 
-    # results_as_py_dict={'glare_periods':results_as_py_dict}  # [{'timestamp':results_as_py_dict}]}
-    #
-
-        dataframes =results_as_py_dict  #  [pd.read_json(json_str) for json_str in results_as_py_dict['glare_periods']]
-        calculation_id = data.identifier
+    await process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_data, simulation_parameter, google_api_key)
 
 
-
-        if len(dataframes) == 0:
-            plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_name=calculation_id)
-            print("No glare.")
-            # return False
-
-        else:
-            print("Glare derected.")
-            print("Are all timestamps unique? " + str(check_timestamps_uniqueness(dataframes[0])))
-            plot_sun_position_reflections_for_multiple_dfs(dataframes, utc,ctr,ops,file_name=calculation_id)
-            # return True
-        ctr=ctr+1
+    return str(timestamp)

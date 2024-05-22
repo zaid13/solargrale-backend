@@ -6,13 +6,13 @@ firebase_admin.initialize_app(cred, {
     'storageBucket': 'solar-glare.appspot.com'
 })
 
-def uploadFileReturnUrl(fileName):
+def uploadFileReturnUrl(userId, simId, fileName,path ):
 
 
     bucket = storage.bucket()
 
-    blob = bucket.blob('result/'+fileName)
-    blob.upload_from_filename('assets/'+fileName)
+    blob = bucket.blob('result/'+path)
+    blob.upload_from_filename(path)
 
     # Opt : if you want to make public access from the URL
     blob.make_public()

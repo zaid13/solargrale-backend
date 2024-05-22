@@ -1,8 +1,9 @@
+import time
 from typing import Union
 import requests
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-import os
+import os,glob
 from typing import Any
 from fastapi import Body, FastAPI
 from starlette.responses import FileResponse
@@ -14,6 +15,7 @@ from firebase_crud import uploadFileReturnUrl
 # from test_api_v2 import sendRequestBackend
 from test_api_v2 import runScriptLocally
 from passlib.context import CryptContext
+from pathlib import Path
 
 from typing import Annotated
 
@@ -131,13 +133,19 @@ def calculate_pv_azimuth(points):
 
     return (edge_orientation - 90) % 360
 
-def remove_images(file_name,list_of_ops):
+def remove_folder(folder_name):
     ''''''
-    file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
-    os.remove(file_path)
-    for ctr in range(0,len(list_of_ops)):
-        file_path = os.getcwd() + '/assets/'+file_name+f'barchart{ctr+1}.png'
-        os.remove(file_path)
+    for file in glob.glob(folder_name+"/*"):
+        os.remove(file)
+    q = Path(folder_name)
+    q.rmdir()
+
+
+    # file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
+    # os.remove(file_path)
+    # for ctr in range(0,len(list_of_ops)):
+    #     file_path = os.getcwd() + '/assets/'+file_name+f'barchart{ctr+1}.png'
+    #     os.remove(file_path)
 
 
 
@@ -255,7 +263,7 @@ async def getPDF(payload: Any = Body(None)):
 
     string = uploadFileReturnUrl(file_name + '.pdf')
     # os.remove(file_path)
-    remove_images(file_name,payload['list_of_ops'])
+    remove_folder(file_name,payload['list_of_ops'])
     # return string
     return {"glareFound":True,"reportUrl":string}
 
@@ -325,28 +333,26 @@ async def getPDF(payload: GlareRequestModel):
     ```
 
     """
-    glareFound = runScriptLocally(payload)
+    print('function started')
+    timestamp = await runScriptLocally(payload)
 
-    if glareFound==False:
-        return {"glareFound":False,"reportUrl":""}
+    print('function ended')
 
+    free_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/free_report.pdf'
+    full_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/full_report.pdf'
 
-
-    file_name = (payload.identifier)
-    file_path = os.getcwd() + "/assets/" + file_name + '.pdf'
-
-    addLogogo(file_path,file_name,len(payload.list_of_ops))
+    # addLogogo(file_path,file_name,len(payload.list_of_ops))
 
     print(payload)
 
-    string = uploadFileReturnUrl(file_name + '.pdf')
+    free_report_file_path_firebase = uploadFileReturnUrl(payload.meta_data.user_id,payload.meta_data.sim_id,'free',free_report_file_path )
+    full_report_file_path_firebase = uploadFileReturnUrl(payload.meta_data.user_id,payload.meta_data.sim_id,'paid' ,full_report_file_path)
     # os.remove(file_path)
-    remove_images(file_name,payload.list_of_ops)
-    # return string
-    return {"glareFound":True,"reportUrl":string}
+    remove_folder(os.getcwd() + "/assets/" + timestamp)
+
+    return {"glareFound":True,"reportUrl":free_report_file_path_firebase,"paidReportUrl":full_report_file_path_firebase}
 
 
-    return payload
 
 def authenticate_user(db, username: str, password: str):
     ''''''
