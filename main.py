@@ -333,10 +333,8 @@ async def getPDF(payload: GlareRequestModel):
     ```
 
     """
-    print('function started')
     timestamp = await runScriptLocally(payload)
 
-    print('function ended')
 
     free_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/free_report.pdf'
     full_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/full_report.pdf'

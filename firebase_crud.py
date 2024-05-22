@@ -11,7 +11,7 @@ def uploadFileReturnUrl(userId, simId, fileName,path ):
 
     bucket = storage.bucket()
 
-    blob = bucket.blob('result/'+path)
+    blob = bucket.blob('result/'+userId+'/'+simId+'/'+fileName)
     blob.upload_from_filename(path)
 
     # Opt : if you want to make public access from the URL

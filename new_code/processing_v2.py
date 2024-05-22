@@ -21,7 +21,7 @@ from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from model.model import Point, GlareRequestModel
 
-def generate_static_map(pv_areas, ops, google_api_key, zoom_level):
+def generate_static_map(pv_areas, ops, google_api_key, zoom_level,timestamp):
     base_url = "https://maps.googleapis.com/maps/api/staticmap?"
 
     size = "800x800"
@@ -48,8 +48,8 @@ def generate_static_map(pv_areas, ops, google_api_key, zoom_level):
     response = requests.get(url)
     if response.status_code == 200:
         image = Image.open(BytesIO(response.content))
-        image.save("map_image.png")
-        return "map_image.png"
+        image.save('assets/'+timestamp+"/map_image.png")
+        return 'assets/'+timestamp+"/map_image.png"
     else:
         print("Fehler bei der Anfrage:", response.status_code)
         return None
@@ -286,8 +286,8 @@ def plot_sun_position_reflections_date_time(df, utc, i,timestamp):
 
     plt.xticks(rotation=45)
     plt.tight_layout()
-    print('utc')
-    print(utc)
+
+
     plt.savefig('assets/'+str(timestamp)+f'/sun_position_reflections_op_{i+1}.png')
     plt.close()
 
@@ -325,7 +325,7 @@ def plot_empty_daily_glare_summary(op_index,sim_id):
     fig, ax = plt.subplots(figsize=(8, 6))
     ax.text(0.5, 0.5, 'No glare data available', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes)
     ax.set_title(f'Glare Duration per Day for OP {op_index + 1}')
-    print(sim_id)
+
     plt.savefig(f'assets/{sim_id}/glare_summary_op_{op_index + 1}.png')
     plt.close()
 
@@ -474,7 +474,7 @@ def add_op_info(ops):
     elements.append(table)
     elements.append(Spacer(1, 24))
 
-def plot_geometry(pv_points_transformed_list, ops_transformed):
+def plot_geometry(pv_points_transformed_list, ops_transformed,timestamp):
     fig = plt.figure(figsize=(10, 7))
     ax = fig.add_subplot(111, projection='3d')
     
@@ -510,7 +510,7 @@ def plot_geometry(pv_points_transformed_list, ops_transformed):
     ax.set_zlim(mid_z - max_range, mid_z + max_range)
 
     plt.tight_layout()
-    plt.savefig('3d_geometry.png')
+    plt.savefig('assets/'+timestamp+'/3d_geometry.png')
     plt.close()  # Commented out to prevent displaying images during execution
 
 
@@ -519,7 +519,7 @@ async def create_pdf(report_type, pv_areas, list_of_pv_area_information, ops, go
     basePath = 'assets'+'/'
 
     outputPath =basePath+ str(meta_data['timestamp'])+'/'
-    print(outputPath)
+
     doc = SimpleDocTemplate(outputPath+f"{report_type}_report.pdf", pagesize=A4)
     elements = []
     styles = getSampleStyleSheet()
@@ -553,14 +553,14 @@ async def create_pdf(report_type, pv_areas, list_of_pv_area_information, ops, go
     elements.append(Spacer(1, 24))
 
     # Map Image
-    map_image_path = generate_static_map(pv_areas, ops, google_api_key, zoom_level)
+    map_image_path = generate_static_map(pv_areas, ops, google_api_key, zoom_level,str(meta_data['timestamp']))
     if map_image_path and os.path.exists(map_image_path):
         elements.append(RLImage(map_image_path, width=540, height=360))
         elements.append(Spacer(1, 24))
     
     # 3D Geometry Plot
-    plot_geometry([geographic_to_cartesian(area, ops[0]) for area in pv_areas], geographic_to_cartesian(ops, ops[0]))
-    elements.append(RLImage(basePath+'3d_geometry.png', width=540, height=360))
+    plot_geometry([geographic_to_cartesian(area, ops[0]) for area in pv_areas], geographic_to_cartesian(ops, ops[0]),str(meta_data['timestamp']))
+    elements.append(RLImage(outputPath+'3d_geometry.png', width=540, height=360))
     elements.append(PageBreak())
 
     # Summary Table
@@ -605,7 +605,7 @@ async def create_pdf(report_type, pv_areas, list_of_pv_area_information, ops, go
     add_pv_area_info(pv_areas, list_of_pv_area_information)
     add_op_info(ops)
 
-    print("doc built")
+
     doc.build(elements)
 
 
