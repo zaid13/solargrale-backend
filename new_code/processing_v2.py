@@ -693,7 +693,7 @@ if __name__ == '__main__':
     meta_data = {'user_id': 123456789, 'project_id': 123456789, 'sim_id': 123456789, 'timestamp': timestamp, 'utc': 1}
     simulation_parameter = {'grid_width': 0.7, 'resolution': '1min', 'sun_elevation_threshold': 4, 'beam_spread': 6.5, 'sun_angle': 0.5, 'sun_reflection_threshold': 10.5, 'zoom_level': 20}
 
-    google_api_key = "AIzaSyCW9jeMpPtnTfua-thXVAG6rzdqGpfdeSs"
+    google_api_key = "CHANGE ME"
 
 
     process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_data, simulation_parameter, google_api_key)
