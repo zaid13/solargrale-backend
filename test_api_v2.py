@@ -22,6 +22,8 @@ from model.model import Point, GlareRequestModel
 import datetime
 import pathlib
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 import io
 
@@ -199,8 +201,11 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc, ctr, ops, fi
 async def runScriptLocally(data: GlareRequestModel):
     current_datetime = datetime.datetime.now()
     timestamp = int(current_datetime.timestamp())
+    load_dotenv()
 
-    google_api_key = "AIzaSyBSwoYxoN9_6oma8thxLWTdIeQkTxsN5Rs"
+
+    google_api_key = os.getenv('MAP_KEY')
+
     pv_areas = data.pv_areas
     list_of_pv_area_information = data.list_of_pv_area_information
     list_of_ops = data.list_of_ops
