@@ -19,7 +19,10 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Image as RLImage, Table, TableStyle, SimpleDocTemplate, Spacer, Paragraph, PageBreak
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from model.model import Point, GlareRequestModel
+
+import time
+
+from dotenv import load_dotenv
 
 def generate_static_map(pv_areas, ops, google_api_key, zoom_level,timestamp):
     base_url = "https://maps.googleapis.com/maps/api/staticmap?"
@@ -122,8 +125,8 @@ def is_point_inside_hull(point, hull):
 #     ax.set_zlabel('Height (Z)')
 
 #     # Equal scaling
-#     max_range = np.array([cps_array[:, 1].max() - cps_array[:, 1].min(), 
-#                           cps_array[:, 0].max() - cps_array[:, 0].min(), 
+#     max_range = np.array([cps_array[:, 1].max() - cps_array[:, 1].min(),
+#                           cps_array[:, 0].max() - cps_array[:, 0].min(),
 #                           cps_array[:, 2].max() - cps_array[:, 2].min()]).max() / 2.0
 
 #     mid_x = (cps_array[:, 1].max() + cps_array[:, 1].min()) * 0.5
@@ -158,15 +161,15 @@ def calculate_sun_positions(origin_point, year, timezone_offset, delta_t='1min',
                              longitude=origin_point['longitude'],
                              tz=f"Etc/GMT{'+' if timezone_offset < 0 else '-'}{abs(timezone_offset)}",
                              altitude=origin_point['ground_elevation'] + origin_point['height_above_ground'])
-    
+
     times = pd.date_range(start=f'{year}-01-01', end=f'{year}-12-31 23:59', freq=delta_t, tz=site_location.tz)
-    
+
     solpos = site_location.get_solarposition(times)
-    
+
     filtered_solpos = solpos[solpos['apparent_elevation'] > sun_threshold]
-    
+
     result = filtered_solpos[['azimuth', 'apparent_elevation']].rename(columns={'apparent_elevation': 'sun_height'})
-    
+
     return result
 
 def calculate_3d_direction_vectors(op_transformed, cps):
@@ -228,6 +231,8 @@ def check_reflection_direction_efficient(reflected_vecs_list, sun_positions, vec
 
             for sun_pos_index in range(len(sun_positions)):
                 reflecting_indices = np.where(within_threshold[:, sun_pos_index])[0]
+                last_reflecting_indices = np.where(within_threshold[:, len(sun_positions)-1-sun_pos_index])[0]
+
                 for idx in reflecting_indices:
                     sun_pos = sun_positions.iloc[sun_pos_index]
                     op_records.append({
@@ -242,7 +247,7 @@ def check_reflection_direction_efficient(reflected_vecs_list, sun_positions, vec
                         'azimuth': pv_area_info['azimuth'],
                         'tilt': pv_area_info['tilt'],
                     })
-            
+
             if op_records:
                 op_df = pd.DataFrame(op_records)
                 dataframes_list.append(op_df)
@@ -253,9 +258,9 @@ def plot_sun_position_reflections_date_time(df, utc, i,timestamp):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
 
     aggregated_df = df.groupby('timestamp')['superpositioned_by_sun'].agg(lambda x: False if False in x.values else True).reset_index()
-    
+
     colors = aggregated_df['superpositioned_by_sun'].map({True: 'gray', False: 'gold'}).values
-    
+
     decimal_hours = aggregated_df['timestamp'].dt.hour + aggregated_df['timestamp'].dt.minute / 60.0
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -263,7 +268,7 @@ def plot_sun_position_reflections_date_time(df, utc, i,timestamp):
     sc = ax.scatter(aggregated_df['timestamp'], decimal_hours, c=colors, alpha=0.75, s=10, marker='o')
 
     legend_labels = {'gray': 'Sun Overlapping', 'gold': 'Glare Occurrence'}
-    handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=10, label=label) 
+    handles = [plt.Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=10, label=label)
                for color, label in legend_labels.items()]
     ax.legend(handles=handles, loc='upper left')
 
@@ -281,7 +286,7 @@ def plot_sun_position_reflections_date_time(df, utc, i,timestamp):
         return f'{hours:02d}:{minutes:02d}'
 
     ax.yaxis.set_major_formatter(plt.FuncFormatter(time_formatter))
-    
+
     ax.grid(True)
 
     plt.xticks(rotation=45)
@@ -301,21 +306,21 @@ def plot_empty_sun_position_reflections(op_index,timestamp):
 def plot_daily_glare_summary(daily_summary_dfs, utc):
     for i, daily_summary in enumerate(daily_summary_dfs):
         daily_summary['date'] = pd.to_datetime(daily_summary['date'])
-        
+
         fig, ax = plt.subplots(figsize=(8, 6))
-        
+
         ax.bar(daily_summary['date'], daily_summary['glare'], label='Glare Duration', color='gold')
         ax.bar(daily_summary['date'], daily_summary['superpositioned_by_sun'], bottom=daily_summary['glare'], label='Sun Overlapping', color='gray')
-        
+
         ax.xaxis.set_major_locator(mdates.MonthLocator())
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
         ax.set_xlabel('Month')
         ax.set_ylabel('Glare Duration per Day in Minutes')
         ax.set_title(f'Glare Duration per Day for OP {i+1}')
         ax.legend()
-        
+
         ax.grid(True)
-        
+
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.savefig('assets/'+str(utc)+f'/glare_summary_op_{i+1}.png')
@@ -331,43 +336,43 @@ def plot_empty_daily_glare_summary(op_index,sim_id):
 
 def save_df_to_excel_with_timestamp(df):
     df_copy = df.copy()
-    
+
     for col in df_copy.select_dtypes(include=['datetime64[ns, UTC]']).columns:
         df_copy[col] = df_copy[col].dt.tz_localize(None)
 
     current_time = datetime.datetime.now()
-    
+
     timestamp_str = current_time.strftime('%Y-%m-%d_%H-%M-%S')
-    
+
     filename = f'data_{timestamp_str}.xlsx'
-    
+
     df_copy.to_excel(filename, index=False)
-    
+
     print(f'DataFrame was saved as: {filename}')
 
 def clean_and_simplify_dfs(result_dfs):
     simplified_dfs = []
     for df in result_dfs:
         simplified_df = df[['timestamp', 'superpositioned_by_sun']].copy()
-        
+
         simplified_df = simplified_df.groupby('timestamp')['superpositioned_by_sun'].agg(lambda x: False if False in x.values else True).reset_index()
-        
+
         simplified_dfs.append(simplified_df)
-    
+
     return simplified_dfs
 
 def create_daily_summary_dfs(simplified_dfs):
     daily_summary_dfs = []
     for df in simplified_dfs:
         df['date'] = df['timestamp'].dt.date
-        
+
         daily_summary = df.groupby('date').agg(
             glare=('superpositioned_by_sun', lambda x: (~x).sum()),
             superpositioned_by_sun=('superpositioned_by_sun', 'sum')
         ).reset_index()
-        
+
         daily_summary_dfs.append(daily_summary)
-        
+
     return daily_summary_dfs
 
 def add_summary_table(daily_summary_dfs, simplified_dfs, num_ops):
@@ -430,7 +435,7 @@ def add_pv_area_info(pv_areas, list_of_pv_area_information):
     ]))
     elements.append(table)
     elements.append(Spacer(1, 24))
-    
+
     elements.append(Paragraph("PV Module Information", styles['Heading3']))
     elements.append(Spacer(1, 12))
     pv_module_data = [["Name", "Azimuth", "Tilt", "Lower Edge Height", "Upper Edge Height"]]
@@ -477,26 +482,26 @@ def add_op_info(ops):
 def plot_geometry(pv_points_transformed_list, ops_transformed,timestamp):
     fig = plt.figure(figsize=(10, 7))
     ax = fig.add_subplot(111, projection='3d')
-    
+
     pv_colors = ['green', 'lightgreen', 'darkgreen', 'lime', 'olive']
-    
+
     # Plot PV areas
     for i, pv_points_transformed in enumerate(pv_points_transformed_list):
         pv_points_array = np.array(pv_points_transformed)
         pv_polygon = np.vstack([pv_points_array, pv_points_array[0]])
         ax.plot(pv_polygon[:, 0], pv_polygon[:, 1], pv_polygon[:, 2], color=pv_colors[i % len(pv_colors)], linestyle='-', linewidth=2, label=f'PV Area {i+1}')
-    
+
     # Plot observation points (OPs)
     ops_array = np.array(ops_transformed)
     ax.scatter(ops_array[:, 0], ops_array[:, 1], ops_array[:, 2], color='red', s=100, marker='x', label='Observation Points (OP)')
-    
+
     ax.set_xlabel('X (Longitude)')
     ax.set_ylabel('Y (Latitude)')
     ax.set_zlabel('Z (Elevation)')
     ax.legend()
-    
+
     ax.set_title('3D Visualization of PV Areas and Observation Points')
-    
+
     # Set equal scale for all axes
     all_points = np.vstack(pv_points_transformed_list + [ops_transformed])
     max_range = np.ptp(all_points, axis=0).max() / 2.0
@@ -514,7 +519,7 @@ def plot_geometry(pv_points_transformed_list, ops_transformed,timestamp):
     plt.close()  # Commented out to prevent displaying images during execution
 
 
-async def create_pdf(report_type, pv_areas, list_of_pv_area_information, ops, google_api_key, zoom_level, daily_summary_dfs, simplified_dfs, utc, meta_data):
+def create_pdf(report_type, pv_areas, list_of_pv_area_information, ops, google_api_key, zoom_level, daily_summary_dfs, simplified_dfs, utc, meta_data):
     global elements, styles
     basePath = 'assets'+'/'
 
@@ -557,7 +562,7 @@ async def create_pdf(report_type, pv_areas, list_of_pv_area_information, ops, go
     if map_image_path and os.path.exists(map_image_path):
         elements.append(RLImage(map_image_path, width=540, height=360))
         elements.append(Spacer(1, 24))
-    
+
     # 3D Geometry Plot
     plot_geometry([geographic_to_cartesian(area, ops[0]) for area in pv_areas], geographic_to_cartesian(ops, ops[0]),str(meta_data['timestamp']))
     elements.append(RLImage(outputPath+'3d_geometry.png', width=540, height=360))
@@ -610,7 +615,7 @@ async def create_pdf(report_type, pv_areas, list_of_pv_area_information, ops, go
 
 
 
-async def process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_data, simulation_parameter, google_api_key):
+def process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_data, simulation_parameter, google_api_key):
     utc = meta_data['utc']
     timestamp = meta_data['timestamp']
     date_from_timestamp = datetime.datetime.fromtimestamp(meta_data['timestamp'])
@@ -627,7 +632,7 @@ async def process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_
     for pv_area in pv_areas:
         pv_area_transformed = geographic_to_cartesian(pv_area, origin_point)
         pv_areas_tansformed.append(pv_area_transformed)
-    
+
     ops_transformed = geographic_to_cartesian(list_of_ops, origin_point)
 
     cps_set = []
@@ -641,13 +646,13 @@ async def process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_
     for cps in cps_set:
         vecs_op_to_cps = calculate_3d_direction_vectors(ops_transformed, cps)
         set_of_vecs_op_to_cps.append(vecs_op_to_cps)
- 
+
     set_of_reflected_vecs = []
     for i, vecs_op_to_cps in enumerate(set_of_vecs_op_to_cps):
         azimuth, tilt = list_of_pv_area_information[i]['azimuth'], list_of_pv_area_information[i]['tilt']
         reflected_vecs = calculate_reflected_vectors(vecs_op_to_cps, azimuth, tilt)
         set_of_reflected_vecs.append(reflected_vecs)
- 
+
     result_dfs = check_reflection_direction_efficient(set_of_reflected_vecs, sun_positions, set_of_vecs_op_to_cps, threshold, sun_reflection_angle_threshold, list_of_pv_area_information)
 
     for i in range(len(list_of_ops)):
@@ -670,11 +675,14 @@ async def process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_
     simplified_dfs = clean_and_simplify_dfs(result_dfs)
 
     daily_summary_dfs = create_daily_summary_dfs(simplified_dfs)
-    
+
     plot_daily_glare_summary(daily_summary_dfs, meta_data['timestamp'])
 
-    await create_pdf('full', pv_areas, list_of_pv_area_information, list_of_ops, google_api_key, simulation_parameter['zoom_level'], daily_summary_dfs, simplified_dfs, utc, meta_data)
-    await create_pdf('free', pv_areas, list_of_pv_area_information, list_of_ops, google_api_key, simulation_parameter['zoom_level'], daily_summary_dfs, simplified_dfs, utc, meta_data)
+    create_pdf('full', pv_areas, list_of_pv_area_information, list_of_ops, google_api_key, simulation_parameter['zoom_level'], daily_summary_dfs, simplified_dfs, utc, meta_data)
+    create_pdf('free', pv_areas, list_of_pv_area_information, list_of_ops, google_api_key, simulation_parameter['zoom_level'], daily_summary_dfs, simplified_dfs, utc, meta_data)
+
+
+t1 = time.perf_counter()
 
 if __name__ == '__main__':
     pv_point_01 = {'latitude': 53.590556, 'longitude': 10.078993, 'ground_elevation': 300, 'height_above_ground': 15}
@@ -685,7 +693,8 @@ if __name__ == '__main__':
     op_02 = {'latitude': 53.590500, 'longitude': 10.079300, 'ground_elevation': 300, 'height_above_ground': 10}
 
     current_datetime = datetime.datetime.now()
-    timestamp = int(current_datetime.timestamp())
+    # timestamp = int(current_datetime.timestamp())
+    timestamp = 12132
 
     pv_areas = [[pv_point_01, pv_point_02, pv_point_03, pv_point_04]]
     list_of_pv_area_information = [{'azimuth': 180, 'tilt': 20, 'name': 'TPV 1', 'ground_elevation': 300, 'height_above_ground': 15}]
@@ -693,7 +702,15 @@ if __name__ == '__main__':
     meta_data = {'user_id': 123456789, 'project_id': 123456789, 'sim_id': 123456789, 'timestamp': timestamp, 'utc': 1}
     simulation_parameter = {'grid_width': 0.7, 'resolution': '1min', 'sun_elevation_threshold': 4, 'beam_spread': 6.5, 'sun_angle': 0.5, 'sun_reflection_threshold': 10.5, 'zoom_level': 20}
 
-    google_api_key = "CHANGE ME"
 
+    load_dotenv()
+
+
+    google_api_key = os.getenv('MAP_KEY')
 
     process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_data, simulation_parameter, google_api_key)
+    t2 = time.perf_counter()
+
+    print(f'Finished in {t2-t1} seconds')
+
+

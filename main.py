@@ -16,6 +16,8 @@ from firebase_crud import uploadFileReturnUrl
 from test_api_v2 import runScriptLocally
 from passlib.context import CryptContext
 from pathlib import Path
+import threading
+import queue
 
 from typing import Annotated
 
@@ -297,7 +299,7 @@ async def getPDF(payload: GlareRequestModel):
         ]
       ],
       "list_of_pv_area_information": [
-        {"azimuth": 152.65, "tilt": 25, "name": "PV Area 1"}
+            {"azimuth": 152.65, "tilt": 25, "name": "PV Area 1"}
       ],
       "list_of_ops": [
         {"latitude": 48.088505, "longitude": 11.566374, "ground_elevation": 555.92, "height_above_ground": 30},
@@ -318,7 +320,8 @@ async def getPDF(payload: GlareRequestModel):
         "project_id": "123456789",
         "sim_id": "123456789",
         "timestamp": 1625235600,
-        "utc": 1
+        "utc": 1,
+        "project_name": "Downtown house"
       },
       "simulation_parameter": {
         "grid_width": 0.7,
@@ -341,14 +344,29 @@ async def getPDF(payload: GlareRequestModel):
 
     # addLogogo(file_path,file_name,len(payload.list_of_ops))
 
-    print(payload)
 
-    free_report_file_path_firebase = uploadFileReturnUrl(payload.meta_data.user_id,payload.meta_data.sim_id,'free',free_report_file_path )
-    full_report_file_path_firebase = uploadFileReturnUrl(payload.meta_data.user_id,payload.meta_data.sim_id,'paid' ,full_report_file_path)
-    # os.remove(file_path)
+
+    thread_list=[]
+    # free_report_file_path_firebase = uploadFileReturnUrl(payload,'free',free_report_file_path )
+    # full_report_file_path_firebase = uploadFileReturnUrl(payload,'paid' ,full_report_file_path)
+
+    free_report_file_path_firebase= queue.Queue()
+    full_report_file_path_firebase= queue.Queue()
+    thread = threading.Thread(target=uploadFileReturnUrl, args=(payload,'free',free_report_file_path,free_report_file_path_firebase))
+    thread2 = threading.Thread(target=uploadFileReturnUrl, args=(payload,'paid' ,full_report_file_path,full_report_file_path_firebase))
+
+    thread_list.append(thread)
+    thread.start()
+    thread_list.append(thread2)
+    res = thread2.start()
+    thread.join()
+
+
+
+
     remove_folder(os.getcwd() + "/assets/" + timestamp)
 
-    return {"glareFound":True,"reportUrl":free_report_file_path_firebase,"paidReportUrl":full_report_file_path_firebase}
+    return {"glareFound":True,"reportUrl":free_report_file_path_firebase.get(),"paidReportUrl":full_report_file_path_firebase.get()}
 
 
 

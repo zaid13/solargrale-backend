@@ -27,6 +27,8 @@ from dotenv import load_dotenv
 
 import io
 
+from new_code.processing_v6 import calculate_glare
+
 
 def check_timestamps_uniqueness(df):
     """Überprüft, ob alle Zeitstempel in einem DataFrame einzigartig sind.
@@ -204,13 +206,15 @@ async def runScriptLocally(data: GlareRequestModel):
     load_dotenv()
 
 
-    google_api_key = os.getenv('MAP_KEY')
+    google_api_key =   os.getenv('MAP_KEY')
 
     pv_areas = data.pv_areas
+
+
     list_of_pv_area_information = data.list_of_pv_area_information
     list_of_ops = data.list_of_ops
     meta_data = {'user_id': data.meta_data.user_id, 'project_id': data.meta_data.project_id,
-                 'sim_id': data.meta_data.sim_id, 'timestamp': timestamp, 'utc': data.meta_data.utc}
+                 'sim_id': data.meta_data.sim_id, 'timestamp': timestamp, 'utc': data.meta_data.utc,"project_name":data.meta_data.project_name}
     simulation_parameter = {'grid_width': data.simulation_parameter.grid_width,
                             'resolution': data.simulation_parameter.resolution,
                             'sun_elevation_threshold': data.simulation_parameter.sun_elevation_threshold,
@@ -220,8 +224,23 @@ async def runScriptLocally(data: GlareRequestModel):
                             'zoom_level': data.simulation_parameter.zoom_level}
 
     pathlib.Path(f'{Path.cwd()}/assets/{str(timestamp)}').mkdir(parents=True, exist_ok=True)
-
-    await process_data(pv_areas, list_of_pv_area_information, list_of_ops, meta_data, simulation_parameter, google_api_key)
+    path=f'{Path.cwd()}/assets/{str(timestamp)}'
+    # calculate_glare(
+    #     data["pv_areas"],
+    #     data["list_of_pv_area_information"],
+    #     data["list_of_ops"],
+    #     data["meta_data"],
+    #     data["simulation_parameter"],
+    #     '',
+    #     'assets/1717509647',
+    #     data["excluded_areas"],
+    # )
+    calculate_glare(pv_areas,
+                    list_of_pv_area_information,
+                    list_of_ops,
+                    meta_data,
+                    simulation_parameter,
+                    google_api_key,path)
 
 
     return str(timestamp)

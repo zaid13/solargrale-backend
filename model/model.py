@@ -35,6 +35,7 @@ class MetaData(BaseModel):
     sim_id: str
     timestamp: int
     utc: int
+    project_name: str
 
 class GlareRequestModel(BaseModel):
     identifier: str

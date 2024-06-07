@@ -18,3 +18,4 @@ Crypto==1.4.1
 python-jose==3.3.0
 python-multipart==0.0.9
 reportlab==4.2.0
+shapely==2.0.4
