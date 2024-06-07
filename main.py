@@ -35,7 +35,9 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:8086",
     "https://solar-glare-web.vercel.app",
-    "http://solar-glare-web.vercel.app"
+    "http://solar-glare-web.vercel.app",
+    "http://solar-glare-web.vercel.app",
+    "https://app.pv-glarecheck.com"
 ]
 
 # -*- coding: utf-8 -*-
