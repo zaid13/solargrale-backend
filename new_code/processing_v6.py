@@ -775,8 +775,11 @@ def plot_glare_data(df_aggregated, output_dir, timestamp, list_of_dps, utc_offse
     os.makedirs(output_dir, exist_ok=True)
     
     year = pd.to_datetime(timestamp, unit='s').year
-    
+    print('keyss')
+    print(df_aggregated.keys())
+    pd.to_datetime(df_aggregated['timestamp'])
     df_aggregated['Date'] = pd.to_datetime(df_aggregated['timestamp']).dt.date
+
     df_aggregated['Time'] = pd.to_datetime(df_aggregated['timestamp']).dt.hour + pd.to_datetime(df_aggregated['timestamp']).dt.minute / 60.0
 
     utc_offset_str = f"UTC {utc_offset:+d}"
@@ -1199,7 +1202,8 @@ simulation_parameter = SimulationParameter(2, '1min', 4, 5, 0.5, 10, 20)
 def calculate_glare(_pv_areas, list_of_pv_area_information, list_of_ops, _meta_data, _simulation_parameter,api_key, output_dir,excluded_areas=[],):
     # Output path for images
     # output_dir = os.getcwd()
-
+    print('api_key')
+    print(api_key)
     # key_path = "api_key.txt"
     # # Öffne die Datei im Lesemodus ('r' für 'read')
     # with open(key_path, 'r') as datei:
@@ -1278,24 +1282,25 @@ def test():
       "identifier": "cub175",
       "pv_areas": [
         [
-          {"latitude": 48.087325, "longitude": 11.566503, "ground_elevation": 555.86, "height_above_ground": 40},
-          {"latitude": 48.08736, "longitude": 11.566616, "ground_elevation": 555.76, "height_above_ground": 50},
-          {"latitude": 48.087325, "longitude": 11.566503, "ground_elevation": 555.93, "height_above_ground": 40},
-          {"latitude": 48.08736, "longitude": 11.566616, "ground_elevation": 556.13, "height_above_ground": 50}
+      {"latitude": 48.088565, "longitude": 11.566283, "ground_elevation": 555.86, "height_above_ground": 40},
+      {"latitude": 48.088592, "longitude": 11.566361, "ground_elevation": 555.76, "height_above_ground": 40},
+      {"latitude": 48.088562, "longitude": 11.566409, "ground_elevation": 555.93, "height_above_ground": 30},
+      {"latitude": 48.088524, "longitude": 11.566298, "ground_elevation": 556.13, "height_above_ground": 30}
         ]
       ],
       "list_of_pv_area_information": [
-        {"azimuth": 155, "tilt": 25, "name": "PV1"}
+    {"azimuth": 152.65, "tilt": 25, "name": "PV Area 1"}
       ],
       "list_of_ops": [
-        {"latitude": 48.087282,  "longitude": 11.566374, "ground_elevation": 555.92, "height_above_ground": 30}
+         {"latitude": 48.088505, "longitude": 11.566374, "ground_elevation": 555.92, "height_above_ground": 30},
+         {"latitude": 48.088493, "longitude": 11.566435, "ground_elevation": 555.78, "height_above_ground": 23}
       ],
       "excluded_areas": [],
       "meta_data": {
         "user_id": "123456789",
         "project_id": "123456789",
-        "sim_id": "123456789",
-        "timestamp": 1625235600,
+        "sim_id": "1234f56789",
+        "timestamp": 1717787690,
         "utc": 1,
         "project_name": "Downtown house"
       },
@@ -1313,19 +1318,21 @@ def test():
     import json
     data = json.loads(example_call)
     
-    # calculate_glare(
-    #     data["pv_areas"],
-    #     data["list_of_pv_area_information"],
-    #     data["list_of_ops"],
-    #     data["meta_data"],
-    #     data["simulation_parameter"],
-    #     '',
-    #     'assets/1717509647',
-    #     data["excluded_areas"],
-    #
-    #
-    #
-    # )
+    calculate_glare(
+        data["pv_areas"],
+        data["list_of_pv_area_information"],
+        data["list_of_ops"],
+        data["meta_data"],
+        data["simulation_parameter"],
+        "AIzaSyCW9jeMpPtnTfua-thXVAG6rzdqGpfdeSs",
+        'assets/local',
+        data["excluded_areas"],
+
+
+
+    )
 
 if __name__ == "__main__":
     test()
+
+    # 1717720922
