@@ -618,6 +618,8 @@ def generate_static_map_with_polygons(pv_areas, ops, api_key, output_dir, map_ty
                f"&maptype={map_type}&{markers_str}&{polygons_str}&key={api_key}")
 
     # Die Kartenabbildung anfordern
+    print('map_url')
+    print(map_url)
     response = requests.get(map_url)
     if response.status_code == 200:
         # Das Bild im Ausgabeverzeichnis speichern
