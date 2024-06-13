@@ -381,12 +381,13 @@ def getPDF(payload: GlareRequestModel):
 
 
         remove_folder(os.getcwd() + "/assets/" + timestamp)
+        update_status(1.0,payload.meta_data.sim_id)
 
     except Exception as error:
         print(error)
         update_status(-1.0,payload.meta_data.sim_id)
 
-    update_status(1.0,payload.meta_data.sim_id)
+
     return {"glareFound":True,"reportUrl":free_report_url,"paidReportUrl":full_report_url}
 
 
