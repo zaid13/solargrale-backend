@@ -20,3 +20,23 @@ def uploadFileReturnUrl(payload, fileName,path,uploadPath ):
     print("your file url", blob.public_url)
     uploadPath.put( blob.public_url)
     return blob.public_url
+
+
+
+
+db = firestore.client()
+
+
+
+
+def update_status(progress:float,docId:str):
+    data = {"uploadState": progress}
+    db.collection("paidReport").document(docId).update(data)
+
+
+
+
+def addUrlTodocument(fieldname:str,docId:str,url:str):
+    data = {"fileUrl": {fieldname:url}}
+    db.collection("paidReport").document(docId).set(data, merge=True, )
+

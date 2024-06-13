@@ -24,6 +24,7 @@ import pathlib
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from firebase_crud import uploadFileReturnUrl,addUrlTodocument,update_status
 
 import io
 
@@ -225,16 +226,9 @@ async def runScriptLocally(data: GlareRequestModel):
 
     pathlib.Path(f'{Path.cwd()}/assets/{str(timestamp)}').mkdir(parents=True, exist_ok=True)
     path=f'{Path.cwd()}/assets/{str(timestamp)}'
-    # calculate_glare(
-    #     data["pv_areas"],
-    #     data["list_of_pv_area_information"],
-    #     data["list_of_ops"],
-    #     data["meta_data"],
-    #     data["simulation_parameter"],
-    #     '',
-    #     'assets/1717509647',
-    #     data["excluded_areas"],
-    # )
+
+
+    update_status(0.16,data.meta_data.sim_id)
     calculate_glare(pv_areas,
                     list_of_pv_area_information,
                     list_of_ops,

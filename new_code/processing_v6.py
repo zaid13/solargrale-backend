@@ -20,6 +20,8 @@ from PIL import Image, ImageFilter
 import time
 import warnings
 from reportlab.pdfgen.canvas import Canvas
+from firebase_crud import uploadFileReturnUrl,addUrlTodocument,update_status
+
 
 # Unterdrücke alle FutureWarnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -1243,37 +1245,46 @@ def calculate_glare(_pv_areas, list_of_pv_area_information, list_of_ops, _meta_d
 
     print("4")
     df_sun = generate_sun_df(list_of_dps[0].latitude, list_of_dps[0].longitude, list_of_dps[0].ground_elevation, meta_data.timestamp, simulation_parameter.resolution, simulation_parameter.sun_elevation_threshold)
-
+    update_status(0.23,_meta_data['sim_id'])
     print("5")
     df_reflection = generate_reflection_df(df_sun, pv_areas)
-
+    update_status(0.29,_meta_data['sim_id'])
     print("6")
     df_glare_results, df_calculation_points_results = generate_glare_results_efficient(df_reflection, df_calculation_points, simulation_parameter.beam_spread, simulation_parameter.sun_angle)
+    update_status(0.34,_meta_data['sim_id'])
 
     print("7")
     df_glare_results = add_di_plane_to_glare_results(df_glare_results, pv_areas)
+    update_status(0.36,_meta_data['sim_id'])
 
     print("8")
     df_glare_results = add_luminance_to_glare_results(df_glare_results, poly_func, lf=125)
+    update_status(0.38,_meta_data['sim_id'])
 
     print("9")
     df_aggregated = aggregate_glare_results(df_glare_results)
 
     print("10")
     df_aggregated = check_reflection_angle_threshold(df_aggregated, simulation_parameter.sun_reflection_threshold)
+    update_status(0.45,_meta_data['sim_id'])
 
     print("11")
     generate_static_map_with_polygons(pv_areas, list_of_dps, api_key, output_dir)
+    update_status(0.52,_meta_data['sim_id'])
 
     print("12")
     generate_and_save_plots(df_pv_area_cornerpoints, df_calculation_points_results, output_dir)
     print("13")
     plot_glare_data(df_aggregated, output_dir, meta_data.timestamp, list_of_dps, meta_data.utc)
+    update_status(0.58,_meta_data['sim_id'])
+
     print("14")
     plot_glare_intensity_with_continuous_colorbar(df_aggregated, output_dir, meta_data.timestamp, list_of_dps, meta_data.utc)
     print("15")
     # save_aggregated_to_excel(df_aggregated, output_dir)
     print("16")
+    update_status(0.61,_meta_data['sim_id'])
+
     generate_reports(df_aggregated, output_dir, list_of_dps, meta_data, simulation_parameter, pv_areas)
 
 

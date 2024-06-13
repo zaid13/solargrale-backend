@@ -11,7 +11,7 @@ import json
 from model.model import Point, GlareRequestModel
 from model.userModel import User,Token,UserInDB
 from addlogoTopdf import addLogogo
-from firebase_crud import uploadFileReturnUrl
+from firebase_crud import uploadFileReturnUrl,addUrlTodocument,update_status
 # from test_api_v2 import sendRequestBackend
 from test_api_v2 import runScriptLocally
 from passlib.context import CryptContext
@@ -339,37 +339,52 @@ async def getPDF(payload: GlareRequestModel):
     ```
 
     """
-    timestamp = await runScriptLocally(payload)
+    try:
+        update_status(0.11,payload.meta_data.sim_id)
+        timestamp = await runScriptLocally(payload)
 
 
-    free_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/free_report.pdf'
-    full_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/full_report.pdf'
-
-    # addLogogo(file_path,file_name,len(payload.list_of_ops))
-
-
-
-    thread_list=[]
-    # free_report_file_path_firebase = uploadFileReturnUrl(payload,'free',free_report_file_path )
-    # full_report_file_path_firebase = uploadFileReturnUrl(payload,'paid' ,full_report_file_path)
-
-    free_report_file_path_firebase= queue.Queue()
-    full_report_file_path_firebase= queue.Queue()
-    thread = threading.Thread(target=uploadFileReturnUrl, args=(payload,'free',free_report_file_path,free_report_file_path_firebase))
-    thread2 = threading.Thread(target=uploadFileReturnUrl, args=(payload,'paid' ,full_report_file_path,full_report_file_path_firebase))
-
-    thread_list.append(thread)
-    thread.start()
-    thread_list.append(thread2)
-    res = thread2.start()
-    thread.join()
+        free_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/free_report.pdf'
+        full_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/full_report.pdf'
 
 
 
 
-    remove_folder(os.getcwd() + "/assets/" + timestamp)
 
-    return {"glareFound":True,"reportUrl":free_report_file_path_firebase.get(),"paidReportUrl":full_report_file_path_firebase.get()}
+        thread_list=[]
+
+
+        free_report_file_path_firebase= queue.Queue()
+        full_report_file_path_firebase= queue.Queue()
+        update_status(0.83,payload.meta_data.sim_id)
+
+        thread = threading.Thread(target=uploadFileReturnUrl, args=(payload,'free',free_report_file_path,free_report_file_path_firebase))
+        thread2 = threading.Thread(target=uploadFileReturnUrl, args=(payload,'paid' ,full_report_file_path,full_report_file_path_firebase))
+
+        thread_list.append(thread)
+        thread.start()
+        update_status(0.85,payload.meta_data.sim_id)
+        thread_list.append(thread2)
+        res = thread2.start()
+        update_status(0.90,payload.meta_data.sim_id)
+        thread.join()
+
+        free_report_url = free_report_file_path_firebase.get()
+        full_report_url = full_report_file_path_firebase.get()
+
+
+        addUrlTodocument("paidReportUrl",payload.meta_data.sim_id,full_report_url)
+
+        addUrlTodocument("reportUrl",payload.meta_data.sim_id,free_report_url)
+
+
+        remove_folder(os.getcwd() + "/assets/" + timestamp)
+
+    except:
+        update_status(-1.0,payload.meta_data.sim_id)
+
+    update_status(1.0,payload.meta_data.sim_id)
+    return {"glareFound":True,"reportUrl":free_report_url,"paidReportUrl":full_report_url}
 
 
 
