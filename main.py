@@ -279,7 +279,7 @@ async def getPDF(payload: Any = Body(None)):
 
 
 @app.post('/getPDF')
-async def getPDF(payload: GlareRequestModel):
+def getPDF(payload: GlareRequestModel):
     """
     Create an item with all the information:
 
@@ -339,9 +339,11 @@ async def getPDF(payload: GlareRequestModel):
     ```
 
     """
+    free_report_url=""
+    full_report_url=""
     try:
         update_status(0.11,payload.meta_data.sim_id)
-        timestamp = await runScriptLocally(payload)
+        timestamp =  runScriptLocally(payload)
 
 
         free_report_file_path = os.getcwd() + "/assets/" + timestamp + f'/free_report.pdf'
@@ -380,7 +382,8 @@ async def getPDF(payload: GlareRequestModel):
 
         remove_folder(os.getcwd() + "/assets/" + timestamp)
 
-    except:
+    except Exception as error:
+        print(error)
         update_status(-1.0,payload.meta_data.sim_id)
 
     update_status(1.0,payload.meta_data.sim_id)

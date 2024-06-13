@@ -201,7 +201,7 @@ def plot_sun_position_reflections_for_multiple_dfs(dataframes, utc, ctr, ops, fi
         # plt.show()
 
 
-async def runScriptLocally(data: GlareRequestModel):
+def runScriptLocally(data: GlareRequestModel):
     current_datetime = datetime.datetime.now()
     timestamp = int(current_datetime.timestamp())
     load_dotenv()

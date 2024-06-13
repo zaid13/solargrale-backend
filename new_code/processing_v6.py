@@ -1213,7 +1213,7 @@ def calculate_glare(_pv_areas, list_of_pv_area_information, list_of_ops, _meta_d
     # with open(key_path, 'r') as datei:
     #     # Lese den Inhalt der Datei
     #     api_key = datei.read()
-
+    plt.switch_backend('Agg')
     # Load module data and fit polynomial
     filename = 'assets/module_reflection_profiles.csv'
     module_type = 1
@@ -1337,7 +1337,7 @@ def test():
         data["list_of_ops"],
         data["meta_data"],
         data["simulation_parameter"],
-        "AIzaSyCW9jeMpPtnTfua-thXVAG6rzdqGpfdeSs",
+
         'assets/local',
         data["excluded_areas"],
 
