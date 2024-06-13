@@ -1337,7 +1337,7 @@ def test():
         data["list_of_ops"],
         data["meta_data"],
         data["simulation_parameter"],
-        "AIzaSyCW9jeMpPtnTfua-thXVAG6rzdqGpfdeSs",
+ 
         'assets/local',
         data["excluded_areas"],
 
