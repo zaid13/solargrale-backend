@@ -18,6 +18,7 @@ from passlib.context import CryptContext
 from pathlib import Path
 import threading
 import queue
+import traceback
 
 from typing import Annotated
 
@@ -383,8 +384,9 @@ def getPDF(payload: GlareRequestModel):
         remove_folder(os.getcwd() + "/assets/" + timestamp)
         update_status(1.0,payload.meta_data.sim_id)
 
-    except Exception as error:
-        print(error)
+    except Exception:
+        print(traceback.format_exc())
+
         update_status(-1.0,payload.meta_data.sim_id)
 
 
