@@ -533,7 +533,18 @@ def aggregate_glare_results(df_glare_results):
         })
 
     # Group by 'OP Number', 'PV Area Name', and 'timestamp' and aggregate
-    df_aggregated = df_glare_results.groupby(['OP Number', 'PV Area Name', 'timestamp']).apply(calculate_extents).reset_index()
+
+
+    df_aggregated = df_glare_results.groupby(['OP Number', 'PV Area Name', 'timestamp']);
+    timestamps = df_glare_results.pop('timestamp')
+    pv_area_name = df_glare_results.pop('PV Area Name')
+    op_number = df_glare_results.pop('OP Number')
+
+    df_aggregated =df_aggregated.apply(calculate_extents).reset_index()
+    print(df_aggregated['timestamp'])
+    df_glare_results['original_timestamp'] = timestamps
+    df_glare_results['PV Area Name'] = pv_area_name
+    df_glare_results['OP Number'] = op_number
     return df_aggregated
 
 def check_reflection_angle_threshold(df_glare_results, sun_reflection_threshold):
